@@ -1,0 +1,6 @@
+@CydaoCabuyao.Server_HostAddress = http://localhost:5137
+
+GET {{CydaoCabuyao.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
