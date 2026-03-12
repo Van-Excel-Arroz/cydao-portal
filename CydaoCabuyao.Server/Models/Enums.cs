@@ -37,7 +37,7 @@ namespace CydaoCabuyao.Server.Models
   {
     Baclaran,
     BanayBanay,
-    Banadero,
+    Banlic,
     Bigaa,
     Butong,
     Casile,
@@ -47,9 +47,11 @@ namespace CydaoCabuyao.Server.Models
     Marinig,
     Niugan,
     Pittland,
+    PoblacionUno,
+    PoblacionDos,
+    PoblacionTres,
     Pulo,
     Sala,
-    SanIsidro,
-    Sucol
+    SanIsidro
   }
 }
