@@ -9,3 +9,6 @@ obj/
 # Environment
 .env
 appsettings.Development.json
+
+# Claude
+.claude/
