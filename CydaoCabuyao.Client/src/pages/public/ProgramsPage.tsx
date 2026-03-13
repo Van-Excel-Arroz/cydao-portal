@@ -78,8 +78,6 @@ const mockPrograms = [
 	},
 ];
 
-type SortKey = 'deadline' | 'az' | 'za';
-
 const categoryOptions = [
 	{ label: 'All', value: 'all' },
 	...Object.entries(PROGRAM_CATEGORY_LABELS).map(([val, label]) => ({
@@ -100,38 +98,25 @@ export default function ProgramsPage() {
 	const [search, setSearch] = useState('');
 	const [category, setCategory] = useState('all');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
-	const [sort, setSort] = useState<SortKey>('deadline');
 
 	const filtered = useMemo(() => {
 		let list = [...mockPrograms];
 
 		if (search.trim()) {
 			const q = search.toLowerCase();
-			list = list.filter(
-				(p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
-			);
+			list = list.filter(p => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
 		}
 		if (category !== 'all') {
-			list = list.filter((p) => p.category === Number(category));
+			list = list.filter(p => p.category === Number(category));
 		}
 		if (status !== 'all') {
-			list = list.filter((p) => (status === 'open' ? p.isOpen : !p.isOpen));
-		}
-		if (sort === 'deadline') {
-			list.sort(
-				(a, b) =>
-					new Date(a.applicationDeadline).getTime() - new Date(b.applicationDeadline).getTime()
-			);
-		} else if (sort === 'az') {
-			list.sort((a, b) => a.title.localeCompare(b.title));
-		} else {
-			list.sort((a, b) => b.title.localeCompare(a.title));
+			list = list.filter(p => (status === 'open' ? p.isOpen : !p.isOpen));
 		}
 
 		return list;
-	}, [search, category, status, sort]);
+	}, [search, category, status]);
 
-	const featured = mockPrograms.find((p) => p.isOpen);
+	const featured = mockPrograms.find(p => p.isOpen);
 
 	return (
 		<>
@@ -148,58 +133,45 @@ export default function ProgramsPage() {
 			{/* Filters bar */}
 			<section className="border-b border-[#e0e0e0] bg-[#f5f5f5] sticky top-16 z-40">
 				<div className="max-w-7xl mx-auto px-6 py-3 flex flex-wrap items-center gap-3">
-						{/* Category dropdown */}
-						<select
-							value={category}
-							onChange={(e) => setCategory(e.target.value)}
-							className="border border-[#e0e0e0] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] text-[#555] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
-						>
-							{categoryOptions.map((opt) => (
-								<option key={opt.value} value={opt.value}>
-									{opt.label}
-								</option>
-							))}
-						</select>
+					{/* Category dropdown */}
+					<select
+						value={category}
+						onChange={e => setCategory(e.target.value)}
+						className="border border-[#e0e0e0] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] text-[#555] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
+					>
+						{categoryOptions.map(opt => (
+							<option key={opt.value} value={opt.value}>
+								{opt.label}
+							</option>
+						))}
+					</select>
 
-						{/* Status toggle */}
-						<div className="flex border border-[#e0e0e0]">
-							{(['all', 'open', 'closed'] as const).map((s) => (
-								<button
-									key={s}
-									onClick={() => setStatus(s)}
-									className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] transition-colors font-['Instrument_Sans'] ${
-										status === s
-											? 'bg-[#0d0d0d] text-white'
-											: 'text-[#555] hover:text-[#0d0d0d]'
-									}`}
-								>
-									{s}
-								</button>
-							))}
-						</div>
+					{/* Status toggle */}
+					<div className="flex border border-[#e0e0e0]">
+						{(['all', 'open', 'closed'] as const).map(s => (
+							<button
+								key={s}
+								onClick={() => setStatus(s)}
+								className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] transition-colors font-['Instrument_Sans'] ${
+									status === s ? 'bg-[#0d0d0d] text-white' : 'text-[#555] hover:text-[#0d0d0d]'
+								}`}
+							>
+								{s}
+							</button>
+						))}
+					</div>
 
-						{/* Sort */}
-						<select
-							value={sort}
-							onChange={(e) => setSort(e.target.value as SortKey)}
-							className="border border-[#e0e0e0] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] text-[#555] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
-						>
-							<option value="deadline">Deadline</option>
-							<option value="az">A → Z</option>
-							<option value="za">Z → A</option>
-						</select>
-
-						{/* Search */}
-						<div className="relative w-52">
-							<Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa]" />
-							<input
-								type="text"
-								placeholder="Search programs..."
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
-								className="w-full pl-8 pr-3 py-1.5 border border-[#e0e0e0] text-[11px] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
-							/>
-						</div>
+					{/* Search */}
+					<div className="relative w-52 ml-auto">
+						<Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa]" />
+						<input
+							type="text"
+							placeholder="Search programs..."
+							value={search}
+							onChange={e => setSearch(e.target.value)}
+							className="w-full pl-8 pr-3 py-1.5 border border-[#e0e0e0] text-[11px] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
+						/>
+					</div>
 				</div>
 			</section>
 
@@ -227,18 +199,14 @@ export default function ProgramsPage() {
 								<p className="text-[10px] uppercase tracking-[2px] text-[#aaa] mb-2 font-['Instrument_Sans']">
 									{PROGRAM_CATEGORY_LABELS[featured.category]}
 								</p>
-								<h2 className="font-['Syne'] font-bold text-3xl text-[#0d0d0d] mb-4 leading-tight">
-									{featured.title}
-								</h2>
+								<h2 className="font-['Syne'] font-bold text-3xl text-[#0d0d0d] mb-4 leading-tight">{featured.title}</h2>
 								<p className="text-sm text-[#555] font-['Instrument_Sans'] leading-relaxed mb-6">
 									{featured.description}
 								</p>
 							</div>
 							<div className="flex items-center justify-between">
 								<div>
-									<p className="text-[10px] uppercase tracking-[2px] text-[#aaa] font-['Instrument_Sans']">
-										Deadline
-									</p>
+									<p className="text-[10px] uppercase tracking-[2px] text-[#aaa] font-['Instrument_Sans']">Deadline</p>
 									<p className="font-['Syne'] font-bold text-sm text-[#0d0d0d]">
 										{formatDeadline(featured.applicationDeadline)}
 									</p>
@@ -265,13 +233,11 @@ export default function ProgramsPage() {
 				{filtered.length === 0 ? (
 					<div className="py-24 text-center">
 						<p className="font-['Syne'] font-bold text-2xl text-[#e0e0e0] mb-2">No programs found</p>
-						<p className="text-sm text-[#aaa] font-['Instrument_Sans']">
-							Try adjusting your filters or search term.
-						</p>
+						<p className="text-sm text-[#aaa] font-['Instrument_Sans']">Try adjusting your filters or search term.</p>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{filtered.map((program) => (
+						{filtered.map(program => (
 							<div key={program.id} className="bg-white border border-[#e0e0e0] p-7 flex flex-col gap-4">
 								<div className="flex items-start justify-between">
 									<span className="text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] bg-[#f5f5f5] text-[#555]">
@@ -279,9 +245,7 @@ export default function ProgramsPage() {
 									</span>
 									<span
 										className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] ${
-											program.isOpen
-												? 'text-[#d42b2b] border border-[#d42b2b]'
-												: 'text-[#aaa] border border-[#e0e0e0]'
+											program.isOpen ? 'text-[#d42b2b] border border-[#d42b2b]' : 'text-[#aaa] border border-[#e0e0e0]'
 										}`}
 									>
 										{program.isOpen ? 'Open' : 'Closed'}
@@ -289,9 +253,7 @@ export default function ProgramsPage() {
 								</div>
 
 								<div>
-									<h3 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-snug mb-2">
-										{program.title}
-									</h3>
+									<h3 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-snug mb-2">{program.title}</h3>
 									<p className="text-sm text-[#555] font-['Instrument_Sans'] leading-relaxed line-clamp-3">
 										{program.description}
 									</p>
