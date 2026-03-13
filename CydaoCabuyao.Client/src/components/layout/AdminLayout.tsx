@@ -29,7 +29,7 @@ interface AdminLayoutProps {
 	noScroll?: boolean;
 }
 
-export function AdminLayout({ children, title, description }: AdminLayoutProps) {
+export function AdminLayout({ children, title, description, noScroll = false }: AdminLayoutProps) {
 	const [collapsed, setCollapsed] = useState(false);
 	const { user, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
@@ -145,7 +145,9 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
 				</div>
 
 				{/* Page content */}
-				<div className="flex-1 p-8">{children}</div>
+				<div className={noScroll ? 'flex-1 overflow-hidden flex flex-col p-6' : 'flex-1 overflow-y-auto p-8'}>
+					{children}
+				</div>
 			</div>
 		</div>
 	);
