@@ -26,6 +26,7 @@ interface AdminLayoutProps {
 	children: ReactNode;
 	title: string;
 	description?: string;
+	noScroll?: boolean;
 }
 
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {
@@ -39,10 +40,10 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
 	}
 
 	return (
-		<div className="flex min-h-screen">
+		<div className="flex h-screen overflow-hidden">
 			{/* Sidebar */}
 			<aside
-				className={`shrink-0 bg-[#0d0d0d] flex flex-col transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}
+				className={`shrink-0 bg-[#0d0d0d] flex flex-col transition-all duration-200 h-screen overflow-y-auto ${collapsed ? 'w-16' : 'w-60'}`}
 			>
 				{/* Logo */}
 				<div
@@ -126,7 +127,7 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
 			</aside>
 
 			{/* Main area */}
-			<div className="flex-1 flex flex-col bg-[#f5f5f5] min-w-0">
+			<div className="flex-1 flex flex-col bg-[#f5f5f5] min-w-0 overflow-y-auto">
 				{/* Top bar */}
 				<div className="bg-white border-b border-[#e0e0e0] px-6 py-4 shrink-0 flex items-center gap-4">
 					<button
