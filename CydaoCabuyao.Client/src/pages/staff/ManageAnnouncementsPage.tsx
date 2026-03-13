@@ -1,8 +1,12 @@
+import { AdminLayout } from '@/components/layout/AdminLayout';
+
 export default function ManageAnnouncementsPage() {
 	return (
-		<div className="max-w-7xl mx-auto px-6 py-24">
-			<h1 className="font-['Syne'] font-bold text-5xl text-[#0d0d0d]">Manage Announcements</h1>
-			<p className="mt-4 text-[#555]">Coming soon.</p>
-		</div>
+		<AdminLayout
+			title="Announcements"
+			description="Post and manage CYDAO announcements."
+		>
+			<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">Announcements content coming soon.</p>
+		</AdminLayout>
 	);
 }

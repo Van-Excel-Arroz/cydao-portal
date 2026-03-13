@@ -1,8 +1,12 @@
+import { AdminLayout } from '@/components/layout/AdminLayout';
+
 export default function AdminDashboardPage() {
 	return (
-		<div className="max-w-7xl mx-auto px-6 py-24">
-			<h1 className="font-['Syne'] font-bold text-5xl text-[#0d0d0d]">Admin Dashboard</h1>
-			<p className="mt-4 text-[#555]">Coming soon.</p>
-		</div>
+		<AdminLayout
+			title="Dashboard"
+			description="Overview of CYDAO portal activity."
+		>
+			<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">Dashboard content coming soon.</p>
+		</AdminLayout>
 	);
 }

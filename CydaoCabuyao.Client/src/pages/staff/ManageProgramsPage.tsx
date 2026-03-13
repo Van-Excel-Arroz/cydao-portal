@@ -1,8 +1,12 @@
+import { AdminLayout } from '@/components/layout/AdminLayout';
+
 export default function ManageProgramsPage() {
 	return (
-		<div className="max-w-7xl mx-auto px-6 py-24">
-			<h1 className="font-['Syne'] font-bold text-5xl text-[#0d0d0d]">Manage Programs</h1>
-			<p className="mt-4 text-[#555]">Coming soon.</p>
-		</div>
+		<AdminLayout
+			title="Programs"
+			description="Create and manage CYDAO youth programs."
+		>
+			<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">Programs content coming soon.</p>
+		</AdminLayout>
 	);
 }
