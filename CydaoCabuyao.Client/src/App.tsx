@@ -19,7 +19,6 @@ import ProfilePage from '@/pages/youth/ProfilePage';
 import AdminDashboardPage from '@/pages/staff/AdminDashboardPage';
 import ManageProgramsPage from '@/pages/staff/ManageProgramsPage';
 import ManageEventsPage from '@/pages/staff/ManageEventsPage';
-import ManageApplicationsPage from '@/pages/staff/ManageApplicationsPage';
 import ManageAnnouncementsPage from '@/pages/staff/ManageAnnouncementsPage';
 
 import { UserRole } from '@/types';
@@ -50,8 +49,7 @@ function App() {
 				<Route path="/admin" element={<AdminDashboardPage />} />
 				<Route path="/admin/programs" element={<ManageProgramsPage />} />
 				<Route path="/admin/events" element={<ManageEventsPage />} />
-				<Route path="/admin/applications" element={<ManageApplicationsPage />} />
-				<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
+					<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
 			</Route>
 		</Routes>
 	);

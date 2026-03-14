@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, X, Users } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { BARANGAY_LABELS } from '@/types';
 import type { CydaoEvent } from '@/types';
 
 // --- Mock data (replace with API calls once backend is ready) ---
@@ -64,6 +65,30 @@ const initialEvents: CydaoEvent[] = [
 	},
 ];
 
+interface MockRegistration {
+	id: number;
+	eventId: number;
+	registrantName: string;
+	barangay: number;
+	registeredAt: string;
+}
+
+const initialRegistrations: MockRegistration[] = [
+	{ id: 1, eventId: 1, registrantName: 'Juan dela Cruz', barangay: 16, registeredAt: '2026-03-01T10:00:00Z' },
+	{ id: 2, eventId: 1, registrantName: 'Maria Santos', barangay: 3, registeredAt: '2026-03-02T09:30:00Z' },
+	{ id: 3, eventId: 1, registrantName: 'Carlo Reyes', barangay: 9, registeredAt: '2026-03-03T14:00:00Z' },
+	{ id: 4, eventId: 1, registrantName: 'Ana Lim', barangay: 15, registeredAt: '2026-03-04T11:00:00Z' },
+	{ id: 5, eventId: 1, registrantName: 'Rico Flores', barangay: 6, registeredAt: '2026-03-05T08:00:00Z' },
+	{ id: 6, eventId: 2, registrantName: 'Liza Ramos', barangay: 7, registeredAt: '2026-03-06T09:00:00Z' },
+	{ id: 7, eventId: 2, registrantName: 'Paolo Cruz', barangay: 2, registeredAt: '2026-03-07T10:00:00Z' },
+	{ id: 8, eventId: 2, registrantName: 'Sofia Garcia', barangay: 4, registeredAt: '2026-03-08T11:00:00Z' },
+	{ id: 9, eventId: 3, registrantName: 'Diego Tan', barangay: 10, registeredAt: '2026-03-09T12:00:00Z' },
+	{ id: 10, eventId: 3, registrantName: 'Grace Villanueva', barangay: 11, registeredAt: '2026-03-10T13:00:00Z' },
+	{ id: 11, eventId: 3, registrantName: 'Kevin Mendoza', barangay: 1, registeredAt: '2026-03-11T14:00:00Z' },
+	{ id: 12, eventId: 4, registrantName: 'Jasmine Ocampo', barangay: 5, registeredAt: '2026-03-12T08:00:00Z' },
+	{ id: 13, eventId: 4, registrantName: 'Bryan Torres', barangay: 12, registeredAt: '2026-03-13T09:00:00Z' },
+];
+
 const labelClass = "text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#0d0d0d]";
 const inputClass =
 	"border border-[#e0e0e0] px-3 py-2.5 text-sm font-['Instrument_Sans'] text-[#0d0d0d] placeholder:text-[#aaaaaa] focus:outline-none focus:border-[#0d0d0d] transition-colors bg-white";
@@ -90,6 +115,7 @@ const emptyForm: EventForm = {
 
 export default function ManageEventsPage() {
 	const [events, setEvents] = useState<CydaoEvent[]>(initialEvents);
+	const [registrations, setRegistrations] = useState<MockRegistration[]>(initialRegistrations);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all');
 	const [modalOpen, setModalOpen] = useState(false);
@@ -98,11 +124,37 @@ export default function ManageEventsPage() {
 	const [formErrors, setFormErrors] = useState<Partial<Record<keyof EventForm, string>>>({});
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+	// Registrants panel state
+	const [registrantsEventId, setRegistrantsEventId] = useState<number | null>(null);
+	const [confirmRemoveRegId, setConfirmRemoveRegId] = useState<number | null>(null);
+
 	const filtered = events.filter(e => {
 		const matchSearch = e.title.toLowerCase().includes(search.toLowerCase());
 		const matchStatus = statusFilter === 'all' || (statusFilter === 'open' ? e.isOpen : !e.isOpen);
 		return matchSearch && matchStatus;
 	});
+
+	const registrantsEvent = events.find(e => e.id === registrantsEventId) ?? null;
+	const panelRegs = registrations.filter(r => r.eventId === registrantsEventId);
+
+	function regCountFor(eventId: number) {
+		return registrations.filter(r => r.eventId === eventId).length;
+	}
+
+	function openRegistrants(eventId: number) {
+		setRegistrantsEventId(eventId);
+		setConfirmRemoveRegId(null);
+	}
+
+	function closeRegistrants() {
+		setRegistrantsEventId(null);
+		setConfirmRemoveRegId(null);
+	}
+
+	function removeRegistration(regId: number) {
+		setRegistrations(prev => prev.filter(r => r.id !== regId));
+		setConfirmRemoveRegId(null);
+	}
 
 	function openCreate() {
 		setForm(emptyForm);
@@ -229,104 +281,129 @@ export default function ManageEventsPage() {
 
 				{/* Table */}
 				<div className="flex-1 flex flex-col min-h-0 bg-white border border-[#e0e0e0]">
-					{/* Header row */}
-					<div className="shrink-0 grid grid-cols-[2fr_1.5fr_1fr_80px_1fr_100px] border-b border-[#e0e0e0] bg-[#fafafa]">
-						{['Title', 'Venue', 'Date', 'Slots', 'Status', 'Actions'].map(h => (
-							<div
-								key={h}
-								className="px-5 py-3 text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]"
-							>
-								{h}
-							</div>
-						))}
-					</div>
+					{/* Scrollable area — header is sticky inside so widths always match */}
+					<div className="flex-1 overflow-y-scroll">
+						{/* Sticky header */}
+						<div className="sticky top-0 z-10 grid grid-cols-[2fr_1.5fr_1fr_110px_1fr_120px] border-b border-[#e0e0e0] bg-[#fafafa]">
+							{(
+								[
+									{ label: 'Title', center: false },
+									{ label: 'Venue', center: false },
+									{ label: 'Date', center: false },
+									{ label: 'Registered', center: true },
+									{ label: 'Status', center: true },
+									{ label: 'Actions', center: true },
+								] as const
+							).map(({ label, center }) => (
+								<div
+									key={label}
+									className={`px-5 py-3 text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] ${center ? 'text-center' : ''}`}
+								>
+									{label}
+								</div>
+							))}
+						</div>
 
-					{/* Scrollable rows */}
-					<div className="flex-1 overflow-y-auto">
+						{/* Rows */}
 						{filtered.length === 0 ? (
 							<div className="flex items-center justify-center h-40">
 								<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">No events match your filters.</p>
 							</div>
 						) : (
-							filtered.map((event, i) => (
-								<div
-									key={event.id}
-									className={`grid grid-cols-[2fr_1.5fr_1fr_80px_1fr_100px] border-b border-[#f5f5f5] last:border-0 ${
-										i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'
-									}`}
-								>
-									<div className="px-5 py-3.5">
-										<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-											{event.title}
-										</p>
-										<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
-											{event.description}
-										</p>
-									</div>
+							filtered.map((event, i) => {
+								const regCount = regCountFor(event.id);
+								return (
+									<div
+										key={event.id}
+										className={`grid grid-cols-[2fr_1.5fr_1fr_110px_1fr_120px] border-b border-[#f5f5f5] last:border-0 ${
+											i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'
+										}`}
+									>
+										<div className="px-5 py-3.5">
+											<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
+												{event.title}
+											</p>
+											<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
+												{event.description}
+											</p>
+										</div>
 
-									<div className="px-5 py-3.5 flex items-center">
-										<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans'] line-clamp-1">{event.venue}</p>
-									</div>
+										<div className="px-5 py-3.5 flex items-center">
+											<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans'] line-clamp-1">{event.venue}</p>
+										</div>
 
-									<div className="px-5 py-3.5 flex items-center">
-										<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(event.startDate)}</p>
-									</div>
+										<div className="px-5 py-3.5 flex items-center">
+											<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(event.startDate)}</p>
+										</div>
 
-									<div className="px-5 py-3.5 flex items-center">
-										<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans']">
-											{event.availableSlots}
-										</p>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center">
-										<span
-											className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${
-												event.isOpen
-													? 'bg-green-50 text-green-700 border-green-200'
-													: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]'
-											}`}
-										>
-											{event.isOpen ? 'Open' : 'Closed'}
-										</span>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center gap-3">
-										{confirmDeleteId === event.id ? (
-											<>
+										<div className="px-5 py-3.5 flex items-center justify-center">
+											{regCount > 0 ? (
 												<button
-													onClick={() => handleDelete(event.id)}
-													className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-white bg-[#d42b2b] px-2 py-1 hover:bg-[#b82424] transition-colors"
+													onClick={() => openRegistrants(event.id)}
+													className="flex items-center gap-1.5 text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
 												>
-													Yes
+													<Users size={13} />
+													<span className="text-sm font-semibold font-['Instrument_Sans']">
+														{regCount} / {event.availableSlots}
+													</span>
 												</button>
-												<button
-													onClick={() => setConfirmDeleteId(null)}
-													className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
-												>
-													No
-												</button>
-											</>
-										) : (
-											<>
-												<button
-													onClick={() => openEdit(event)}
-													title="Edit"
-													className="text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
-												>
-													<Pencil size={14} />
-												</button>
-												<button
-													onClick={() => setConfirmDeleteId(event.id)}
-													title="Delete"
-													className="text-[#aaaaaa] hover:text-[#d42b2b] transition-colors"
-												>
-													<Trash2 size={14} />
-												</button>
-											</>
-										)}
+											) : (
+												<span className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">
+													0 / {event.availableSlots}
+												</span>
+											)}
+										</div>
+
+										<div className="px-5 py-3.5 flex items-center justify-center">
+											<span
+												className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${
+													event.isOpen
+														? 'bg-green-50 text-green-700 border-green-200'
+														: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]'
+												}`}
+											>
+												{event.isOpen ? 'Open' : 'Closed'}
+											</span>
+										</div>
+
+										<div className="px-5 py-3.5 flex items-center justify-center gap-3">
+											{confirmDeleteId === event.id ? (
+												<>
+													<button
+														onClick={() => handleDelete(event.id)}
+														className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-white bg-[#d42b2b] px-2 py-1 hover:bg-[#b82424] transition-colors"
+													>
+														Yes
+													</button>
+													<button
+														onClick={() => setConfirmDeleteId(null)}
+														className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
+													>
+														No
+													</button>
+												</>
+											) : (
+												<>
+													<button
+														onClick={() => openEdit(event)}
+														title="Edit"
+														className="text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
+													>
+														<Pencil size={14} />
+													</button>
+													<button
+														onClick={() => setConfirmDeleteId(event.id)}
+														title="Delete"
+														className="text-[#aaaaaa] hover:text-[#d42b2b] transition-colors"
+													>
+														<Trash2 size={14} />
+													</button>
+												</>
+											)}
+										</div>
 									</div>
-								</div>
-							))
+								);
+							})
 						)}
 					</div>
 
@@ -338,6 +415,117 @@ export default function ManageEventsPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Registrants Panel Modal */}
+			{registrantsEventId !== null && registrantsEvent && (
+				<div
+					className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+					onClick={e => {
+						if (e.target === e.currentTarget) closeRegistrants();
+					}}
+				>
+					<div className="bg-white w-full max-w-2xl h-[80vh] shadow-xl flex flex-col">
+						{/* Header */}
+						<div className="shrink-0 flex items-start justify-between px-6 py-4 border-b border-[#e0e0e0]">
+							<div>
+								<p className="text-[10px] font-bold tracking-[3px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
+									Registrants — {panelRegs.length} / {registrantsEvent.availableSlots} slots
+								</p>
+								<h2 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-tight mt-0.5">
+									{registrantsEvent.title}
+								</h2>
+								<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-1">
+									{registrantsEvent.venue} &middot; {formatDate(registrantsEvent.startDate)}
+								</p>
+							</div>
+							<button onClick={closeRegistrants} className="text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors mt-1">
+								<X size={18} />
+							</button>
+						</div>
+
+						{/* Registrants list */}
+						<div className="flex-1 overflow-y-scroll">
+							{/* List header */}
+							<div className="grid grid-cols-[1fr_1fr_1fr_80px] border-b border-[#e0e0e0] bg-[#fafafa]">
+								{['Name', 'Barangay', 'Registered', ''].map((h, idx) => (
+									<div
+										key={idx}
+										className="px-5 py-2.5 text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]"
+									>
+										{h}
+									</div>
+								))}
+							</div>
+
+							{panelRegs.length === 0 ? (
+								<div className="flex items-center justify-center h-32">
+									<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">No registrants yet.</p>
+								</div>
+							) : (
+								panelRegs.map((reg, i) => (
+									<div
+										key={reg.id}
+										className={`grid grid-cols-[1fr_1fr_1fr_80px] border-b border-[#f5f5f5] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
+									>
+										<div className="px-5 py-3 flex items-center">
+											<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans']">
+												{reg.registrantName}
+											</p>
+										</div>
+										<div className="px-5 py-3 flex items-center">
+											<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">
+												{BARANGAY_LABELS[reg.barangay as keyof typeof BARANGAY_LABELS]}
+											</p>
+										</div>
+										<div className="px-5 py-3 flex items-center">
+											<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">
+												{new Date(reg.registeredAt).toLocaleDateString('en-PH', {
+													month: 'short',
+													day: 'numeric',
+													year: 'numeric',
+												})}
+											</p>
+										</div>
+										<div className="px-5 py-3 flex items-center">
+											{confirmRemoveRegId === reg.id ? (
+												<div className="flex items-center gap-2">
+													<button
+														onClick={() => removeRegistration(reg.id)}
+														className="text-[9px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-white bg-[#d42b2b] px-2 py-1 hover:bg-[#b82424] transition-colors"
+													>
+														Yes
+													</button>
+													<button
+														onClick={() => setConfirmRemoveRegId(null)}
+														className="text-[9px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
+													>
+														No
+													</button>
+												</div>
+											) : (
+												<button
+													onClick={() => setConfirmRemoveRegId(reg.id)}
+													title="Remove"
+													className="text-[#aaaaaa] hover:text-[#d42b2b] transition-colors"
+												>
+													<Trash2 size={13} />
+												</button>
+											)}
+										</div>
+									</div>
+								))
+							)}
+						</div>
+
+						{/* Footer */}
+						<div className="shrink-0 border-t border-[#e0e0e0] px-6 py-2.5 bg-[#fafafa]">
+							<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans']">
+								{registrantsEvent.availableSlots - panelRegs.length} slots remaining
+							</p>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* Create / Edit Modal */}
 			{modalOpen && (

@@ -5,7 +5,6 @@ import {
 	LayoutDashboard,
 	BookOpen,
 	Calendar,
-	ClipboardList,
 	Megaphone,
 	Menu,
 	LogOut,
@@ -18,7 +17,6 @@ const navItems = [
 	{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
 	{ to: '/admin/programs', label: 'Programs', icon: BookOpen, end: false },
 	{ to: '/admin/events', label: 'Events', icon: Calendar, end: false },
-	{ to: '/admin/applications', label: 'Applications', icon: ClipboardList, end: false },
 	{ to: '/admin/announcements', label: 'Announcements', icon: Megaphone, end: false },
 ];
 
