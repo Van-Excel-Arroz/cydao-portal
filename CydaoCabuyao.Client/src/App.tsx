@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { ScrollToTop } from '@/components/shared/ScrollToTop';
 
 import LandingPage from '@/pages/public/LandingPage';
 import ProgramsPage from '@/pages/public/ProgramsPage';
@@ -25,7 +26,9 @@ import { UserRole } from '@/types';
 
 function App() {
 	return (
-		<Routes>
+		<>
+			<ScrollToTop />
+			<Routes>
 			{/* Public routes — wrapped with Navbar and Footer */}
 			<Route element={<PublicLayout />}>
 				<Route path="/" element={<LandingPage />} />
@@ -52,7 +55,8 @@ function App() {
 				<Route path="/admin/events" element={<ManageEventsPage />} />
 				<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
 			</Route>
-		</Routes>
+			</Routes>
+		</>
 	);
 }
 
