@@ -398,8 +398,8 @@ export default function ManageProgramsPage() {
 							{(
 								[
 									{ label: 'Title', center: false },
-									{ label: 'Category', center: false },
-									{ label: 'Deadline', center: false },
+									{ label: 'Category', center: true },
+									{ label: 'Deadline', center: true },
 									{ label: 'Status', center: true },
 									{ label: 'Applicants', center: true },
 									{ label: 'Actions', center: true },
