@@ -26,7 +26,7 @@ import { UserRole } from '@/types';
 function App() {
 	return (
 		<Routes>
-			{/* Public + youth routes — wrapped with Navbar and Footer */}
+			{/* Public routes — wrapped with Navbar and Footer */}
 			<Route element={<PublicLayout />}>
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/programs" element={<ProgramsPage />} />
@@ -35,13 +35,14 @@ function App() {
 				<Route path="/about" element={<AboutPage />} />
 				<Route path="/login" element={<LoginPage />} />
 				<Route path="/register" element={<RegisterPage />} />
+			</Route>
 
-				<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
-					<Route path="/dashboard" element={<DashboardPage />} />
-					<Route path="/my-applications" element={<MyApplicationsPage />} />
-					<Route path="/my-registrations" element={<MyRegistrationsPage />} />
-					<Route path="/profile" element={<ProfilePage />} />
-				</Route>
+			{/* Youth routes */}
+			<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
+				<Route path="/dashboard" element={<DashboardPage />} />
+				<Route path="/my-applications" element={<MyApplicationsPage />} />
+				<Route path="/my-registrations" element={<MyRegistrationsPage />} />
+				<Route path="/profile" element={<ProfilePage />} />
 			</Route>
 
 			{/* Staff routes */}
@@ -49,7 +50,7 @@ function App() {
 				<Route path="/admin" element={<AdminDashboardPage />} />
 				<Route path="/admin/programs" element={<ManageProgramsPage />} />
 				<Route path="/admin/events" element={<ManageEventsPage />} />
-					<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
+				<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
 			</Route>
 		</Routes>
 	);
