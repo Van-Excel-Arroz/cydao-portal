@@ -121,10 +121,18 @@ export default function ProgramsPage() {
 	return (
 		<>
 			{/* Page header */}
-			<section className="border-b border-[#e0e0e0] bg-white">
-				<div className="max-w-7xl mx-auto px-6 py-16">
-					<p className="eyebrow text-[#aaa] mb-4">CYDAO Cabuyao</p>
-					<h1 className="font-['Syne'] font-extrabold text-[clamp(2.5rem,5vw,4rem)] leading-none text-[#0d0d0d]">
+			<section className="relative overflow-hidden bg-[#0d0d0d] h-[40vh] min-h-72">
+				<img
+					src="https://picsum.photos/seed/programs-header/1600/600"
+					alt=""
+					aria-hidden="true"
+					className="absolute inset-0 w-full h-full object-cover opacity-30"
+				/>
+				<div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-10">
+					<p className="text-[11px] font-bold tracking-[3px] uppercase text-white/40 font-['Instrument_Sans'] mb-3">
+						CYDAO Cabuyao
+					</p>
+					<h1 className="font-['Syne'] font-extrabold text-[clamp(2.5rem,5vw,4rem)] leading-none text-white">
 						Programs
 					</h1>
 				</div>
