@@ -209,47 +209,53 @@ export default function YouthProgramsPage() {
 					<p className="text-sm text-[#aaa] font-['Instrument_Sans']">Try adjusting your filters or search term.</p>
 				</div>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 					{filtered.map(program => (
 						<button
 							key={program.id}
 							onClick={() => setSelected(program)}
-							className="bg-white border border-[#e0e0e0] p-6 flex flex-col gap-4 text-left hover:border-[#0d0d0d] transition-colors group"
+							className="text-left flex flex-col bg-white border border-[#e0e0e0] hover:border-[#0d0d0d] transition-colors group"
 						>
-							<div className="flex items-start justify-between gap-2">
-								<span
-									className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] border ${categoryBadge[program.category]}`}
-								>
-									{PROGRAM_CATEGORY_LABELS[program.category]}
-								</span>
-								<div className="flex items-center gap-2 shrink-0">
+							{/* Cover image */}
+							<div className="overflow-hidden h-44 shrink-0 relative">
+								<img
+									src={categoryImage[program.category]}
+									alt={program.title}
+									className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+								/>
+								<div className="absolute top-3 left-3 flex items-center gap-1.5">
+									<span
+										className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] ${
+											program.isOpen ? 'bg-[#d42b2b] text-white' : 'bg-[#f5f5f5] text-[#aaa]'
+										}`}
+									>
+										{program.isOpen ? 'Open' : 'Closed'}
+									</span>
 									{appliedIds.has(program.id) && (
 										<span className="text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] bg-green-50 text-green-700 border border-green-200">
 											Applied
 										</span>
 									)}
-									<span
-										className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] ${
-											program.isOpen ? 'text-[#d42b2b] border border-[#d42b2b]' : 'text-[#aaa] border border-[#e0e0e0]'
-										}`}
-									>
-										{program.isOpen ? 'Open' : 'Closed'}
-									</span>
 								</div>
 							</div>
 
-							<div>
-								<h3 className="font-['Syne'] font-bold text-base text-[#0d0d0d] leading-snug mb-2 group-hover:text-[#d42b2b] transition-colors">
+							{/* Details */}
+							<div className="p-4 flex flex-col flex-1">
+								<span
+									className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] border self-start mb-2 ${categoryBadge[program.category]}`}
+								>
+									{PROGRAM_CATEGORY_LABELS[program.category]}
+								</span>
+								<h3 className="font-['Syne'] font-bold text-sm text-[#0d0d0d] leading-snug mb-2 group-hover:text-[#d42b2b] transition-colors line-clamp-2">
 									{program.title}
 								</h3>
-								<p className="text-sm text-[#555] font-['Instrument_Sans'] leading-relaxed line-clamp-3">
+								<p className="text-xs text-[#555] font-['Instrument_Sans'] leading-relaxed line-clamp-2 flex-1">
 									{program.description}
 								</p>
-							</div>
-
-							<div className="mt-auto pt-4 border-t border-[#f0f0f0] flex items-center gap-1.5 text-xs text-[#aaaaaa] font-['Instrument_Sans']">
-								<Calendar size={11} />
-								<span>Deadline: {formatDeadline(program.applicationDeadline)}</span>
+								<div className="flex items-center gap-1.5 mt-3 text-xs text-[#aaaaaa] font-['Instrument_Sans']">
+									<Calendar size={11} className="shrink-0" />
+									<span>Deadline: {formatDeadline(program.applicationDeadline)}</span>
+								</div>
 							</div>
 						</button>
 					))}
