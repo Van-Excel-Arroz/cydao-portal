@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
 import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
@@ -22,6 +22,8 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 	const [collapsed, setCollapsed] = useState(false);
 	const { user, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
+	const location = useLocation();
+	const isMyApplications = location.pathname === '/my-applications';
 
 	function handleLogout() {
 		clearAuth();
@@ -131,6 +133,15 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 						<h1 className="font-['Syne'] font-bold text-xl text-[#0d0d0d] leading-tight">{title}</h1>
 						{description && <p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5">{description}</p>}
 					</div>
+
+					{isMyApplications && (
+						<Link
+							to="/programs"
+							className="shrink-0 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors"
+						>
+							Apply for Programs
+						</Link>
+					)}
 				</div>
 
 				{/* Page content */}
