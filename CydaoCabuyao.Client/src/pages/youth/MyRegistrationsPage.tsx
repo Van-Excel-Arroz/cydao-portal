@@ -174,9 +174,9 @@ export default function MyRegistrationsPage() {
 					className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
 					onClick={e => { if (e.target === e.currentTarget) handleCloseModal(); }}
 				>
-					<div className="bg-white w-full max-w-lg shadow-xl">
+					<div className="bg-white w-full max-w-lg shadow-xl flex flex-col max-h-[90vh]">
 						{/* Cover image */}
-						<div className="relative h-36 overflow-hidden">
+						<div className="relative h-36 shrink-0 overflow-hidden">
 							<img
 								src={eventImages[selectedReg.id]}
 								alt={selectedReg.eventTitle}
@@ -192,7 +192,7 @@ export default function MyRegistrationsPage() {
 						</div>
 
 						{/* Header */}
-						<div className="px-6 py-4 border-b border-[#e0e0e0]">
+						<div className="shrink-0 px-6 py-4 border-b border-[#e0e0e0]">
 							<h2 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-tight">
 								{selectedReg.eventTitle}
 							</h2>
@@ -201,41 +201,36 @@ export default function MyRegistrationsPage() {
 							</p>
 						</div>
 
-						{/* Body */}
-						<div className="px-6 py-5 flex flex-col gap-4">
-							{/* Event details */}
-							<div className="flex flex-col gap-2">
-								<div className="flex items-center gap-2 text-sm font-['Instrument_Sans'] text-[#0d0d0d]">
-									<Calendar size={13} className="shrink-0 text-[#aaaaaa]" />
-									{formatDateRange(selectedReg.startDate, selectedReg.endDate)}
-								</div>
-								<div className="flex items-center gap-2 text-sm font-['Instrument_Sans'] text-[#0d0d0d]">
-									<MapPin size={13} className="shrink-0 text-[#aaaaaa]" />
-									{selectedReg.venue}
-								</div>
-								<div className="flex items-center gap-2 text-sm font-['Instrument_Sans']">
-									<Users size={13} className="shrink-0 text-[#aaaaaa]" />
-									<span className={selectedReg.availableSlots <= 5 ? 'text-[#d42b2b] font-semibold' : 'text-[#0d0d0d]'}>
-										{selectedReg.availableSlots} slot{selectedReg.availableSlots !== 1 ? 's' : ''} remaining
-									</span>
-								</div>
+						{/* Event details — fixed */}
+						<div className="shrink-0 px-6 pt-5 pb-4 flex flex-col gap-2 border-b border-[#e0e0e0]">
+							<div className="flex items-center gap-2 text-sm font-['Instrument_Sans'] text-[#0d0d0d]">
+								<Calendar size={13} className="shrink-0 text-[#aaaaaa]" />
+								{formatDateRange(selectedReg.startDate, selectedReg.endDate)}
 							</div>
-
-							{/* Description */}
-							<div className="border-t border-[#e0e0e0] pt-4">
-								<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] mb-2">
-									About this Event
-								</p>
-								<div className="max-h-36 overflow-y-auto pr-1">
-									<p className="text-sm font-['Instrument_Sans'] text-[#0d0d0d] leading-relaxed">
-										{selectedReg.eventDescription}
-									</p>
-								</div>
+							<div className="flex items-center gap-2 text-sm font-['Instrument_Sans'] text-[#0d0d0d]">
+								<MapPin size={13} className="shrink-0 text-[#aaaaaa]" />
+								{selectedReg.venue}
+							</div>
+							<div className="flex items-center gap-2 text-sm font-['Instrument_Sans']">
+								<Users size={13} className="shrink-0 text-[#aaaaaa]" />
+								<span className={selectedReg.availableSlots <= 5 ? 'text-[#d42b2b] font-semibold' : 'text-[#0d0d0d]'}>
+									{selectedReg.availableSlots} slot{selectedReg.availableSlots !== 1 ? 's' : ''} remaining
+								</span>
 							</div>
 						</div>
 
+						{/* Description — expands */}
+						<div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
+							<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
+								About this Event
+							</p>
+							<p className="text-sm font-['Instrument_Sans'] text-[#0d0d0d] leading-relaxed">
+								{selectedReg.eventDescription}
+							</p>
+						</div>
+
 						{/* Footer */}
-						<div className="flex items-center justify-between px-6 py-4 border-t border-[#e0e0e0]">
+						<div className="shrink-0 flex items-center justify-between px-6 py-4 border-t border-[#e0e0e0]">
 							<div>
 								{confirmCancel ? (
 									<div className="flex items-center gap-3">

@@ -24,6 +24,7 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 	const navigate = useNavigate();
 	const location = useLocation();
 	const isMyApplications = location.pathname === '/my-applications';
+	const isMyRegistrations = location.pathname === '/my-registrations';
 
 	function handleLogout() {
 		clearAuth();
@@ -140,6 +141,14 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 							className="shrink-0 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors"
 						>
 							Apply for Programs
+						</Link>
+					)}
+					{isMyRegistrations && (
+						<Link
+							to="/events"
+							className="shrink-0 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors"
+						>
+							Browse Events
 						</Link>
 					)}
 				</div>
