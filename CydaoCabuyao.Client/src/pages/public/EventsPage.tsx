@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Calendar, Users, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { MapPin, Calendar, Users, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { OpenBadge, Badge } from '@/components/shared/Badge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { SearchInput } from '@/components/shared/SearchInput';
+import { SegmentedControl } from '@/components/shared/SegmentedControl';
 
 const mockEvents = [
 	{
@@ -104,6 +108,12 @@ function formatEventDate(start: string, end: string) {
 	return `${s.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
+const STATUS_OPTIONS = [
+	{ label: 'All', value: 'all' },
+	{ label: 'Open', value: 'open' },
+	{ label: 'Closed', value: 'closed' },
+] as const;
+
 export default function EventsPage() {
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
@@ -125,7 +135,6 @@ export default function EventsPage() {
 		return list;
 	}, [search, status]);
 
-	// Group by month
 	const grouped = useMemo(() => {
 		const map = new Map<string, typeof filtered>();
 		for (const ev of filtered) {
@@ -142,14 +151,12 @@ export default function EventsPage() {
 			{/* Featured event — full-bleed banner */}
 			<section className="relative overflow-hidden bg-[#0d0d0d] h-[50vh] min-h-90">
 				<img
-					src={`https://picsum.photos/seed/event-featured/1400/700`}
+					src="https://picsum.photos/seed/event-featured/1400/700"
 					alt={featured.title}
 					className="absolute inset-0 w-full h-full object-cover opacity-30"
 				/>
 				<div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-12">
-					<span className="text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 bg-[#d42b2b] text-white w-fit mb-3 font-['Instrument_Sans']">
-						Next Up
-					</span>
+					<Badge className="bg-[#d42b2b] text-white border-[#d42b2b] w-fit mb-3">Next Up</Badge>
 					<h2 className="font-['Syne'] font-extrabold text-4xl text-white leading-tight mb-3 max-w-xl">
 						{featured.title}
 					</h2>
@@ -179,31 +186,15 @@ export default function EventsPage() {
 			{/* Filters */}
 			<section className="border-b border-[#e0e0e0] sticky top-16 z-40 bg-[#f5f5f5]">
 				<div className="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
-					<div className="relative flex-1 max-w-sm">
-						<Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa]" />
-						<input
-							type="text"
-							placeholder="Search events or venues..."
-							value={search}
-							onChange={e => setSearch(e.target.value)}
-							className="w-full pl-9 pr-4 py-2 border border-[#e0e0e0] text-sm font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white"
-						/>
-					</div>
+					<SearchInput
+						placeholder="Search events or venues..."
+						value={search}
+						onChange={e => setSearch(e.target.value)}
+						containerClassName="flex-1 max-w-sm"
+					/>
 					<div className="flex items-center gap-3">
 						<SlidersHorizontal size={13} className="text-[#aaa]" />
-						<div className="flex border border-[#e0e0e0]">
-							{(['all', 'open', 'closed'] as const).map(s => (
-								<button
-									key={s}
-									onClick={() => setStatus(s)}
-									className={`px-4 py-2 text-[11px] font-bold uppercase tracking-[1px] transition-colors font-['Instrument_Sans'] ${
-										status === s ? 'bg-[#0d0d0d] text-white' : 'text-[#555] hover:text-[#0d0d0d]'
-									}`}
-								>
-									{s}
-								</button>
-							))}
-						</div>
+						<SegmentedControl options={[...STATUS_OPTIONS]} value={status} onChange={setStatus} />
 					</div>
 				</div>
 			</section>
@@ -211,10 +202,7 @@ export default function EventsPage() {
 			{/* Events grouped by month */}
 			<div className="max-w-7xl mx-auto px-6 py-16">
 				{filtered.length === 0 ? (
-					<div className="py-24 text-center">
-						<p className="font-['Syne'] font-bold text-2xl text-[#e0e0e0] mb-2">No events found</p>
-						<p className="text-sm text-[#aaa] font-['Instrument_Sans']">Try a different search or filter.</p>
-					</div>
+					<EmptyState variant="page" title="No events found" subtitle="Try a different search or filter." />
 				) : (
 					<div className="space-y-16">
 						{Array.from(grouped.entries()).map(([month, events]) => (
@@ -228,14 +216,12 @@ export default function EventsPage() {
 									</span>
 								</div>
 
-								{/* Events in this month */}
 								<div className="space-y-4">
 									{events.map(event => (
 										<div
 											key={event.id}
-											className="grid grid-cols-1 lg:grid-cols-[200px_1fr_auto] gap-0 bg-white border border-[#e0e0e0] group hover:border-[#d42b2b] transition-colors"
+											className="grid grid-cols-1 lg:grid-cols-[200px_1fr_auto] bg-white border border-[#e0e0e0] group hover:border-[#d42b2b] transition-colors"
 										>
-											{/* Image */}
 											<div className="overflow-hidden h-40 lg:h-auto">
 												<img
 													src={`https://picsum.photos/seed/ev${event.id}/300/200`}
@@ -244,17 +230,10 @@ export default function EventsPage() {
 												/>
 											</div>
 
-											{/* Details */}
 											<div className="p-6 border-t lg:border-t-0 lg:border-l border-[#e0e0e0] flex flex-col justify-between">
 												<div>
-													<div className="flex items-center gap-2 mb-2">
-														<span
-															className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 font-['Instrument_Sans'] ${
-																event.isOpen ? 'bg-[#d42b2b] text-white' : 'bg-[#f5f5f5] text-[#aaa]'
-															}`}
-														>
-															{event.isOpen ? 'Open' : 'Closed'}
-														</span>
+													<div className="mb-2">
+														<OpenBadge isOpen={event.isOpen} />
 													</div>
 													<h3 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] mb-2 leading-snug">
 														{event.title}
@@ -279,7 +258,6 @@ export default function EventsPage() {
 												</div>
 											</div>
 
-											{/* CTA */}
 											<div className="flex items-center justify-center px-8 border-t lg:border-t-0 lg:border-l border-[#e0e0e0] py-4 lg:py-0">
 												{event.isOpen ? (
 													<Link

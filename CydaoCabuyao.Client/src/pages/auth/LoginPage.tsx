@@ -64,7 +64,7 @@ export default function LoginPage() {
 	});
 
 	if (user) {
-		return <Navigate to={user.role === UserRole.Staff ? '/admin/programs' : '/profile'} replace />;
+		return <Navigate to={user.role === UserRole.Staff ? '/admin/programs' : '/youth/profile'} replace />;
 	}
 
 	async function onSubmit(data: LoginFormData) {
@@ -74,14 +74,14 @@ export default function LoginPage() {
 		const mock = MOCK_USERS[data.email];
 		if (mock && mock.password === data.password) {
 			setAuth(mock.user, mock.token);
-			navigate(mock.user.role === UserRole.Staff ? '/admin/programs' : '/profile');
+			navigate(mock.user.role === UserRole.Staff ? '/admin/programs' : '/youth/profile');
 			return;
 		}
 
 		try {
 			const res = await api.post<AuthResponse>('/auth/login', data);
 			setAuth(res.data.user, res.data.token);
-			navigate(res.data.user.role === UserRole.Staff ? '/admin/programs' : '/profile');
+			navigate(res.data.user.role === UserRole.Staff ? '/admin/programs' : '/youth/profile');
 		} catch (err: unknown) {
 			const message =
 				err instanceof Error && 'response' in err

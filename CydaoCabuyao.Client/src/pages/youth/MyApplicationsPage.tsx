@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { YouthLayout } from '@/components/layout/YouthLayout';
-import { ApplicationStatus, APPLICATION_STATUS_LABELS, ProgramCategory, PROGRAM_CATEGORY_LABELS } from '@/types';
+import { ApplicationStatus, ProgramCategory } from '@/types';
 import { useApplicationsStore } from '@/stores/applicationsStore';
 import type { StoredApplication } from '@/stores/applicationsStore';
+import { CategoryBadge, StatusBadge } from '@/components/shared/Badge';
+import { Btn } from '@/components/shared/Btn';
+import { DataTable, tableRowClass } from '@/components/shared/DataTable';
+import { Modal, ModalCover, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
 
 const categoryImage: Record<ProgramCategory, string> = {
 	[ProgramCategory.Leadership]: 'https://picsum.photos/seed/prog-leadership/800/300',
@@ -15,23 +18,6 @@ const categoryImage: Record<ProgramCategory, string> = {
 	[ProgramCategory.Scholarship]: 'https://picsum.photos/seed/prog-scholarship/800/300',
 };
 
-const categoryBadge: Record<ProgramCategory, string> = {
-	[ProgramCategory.Leadership]: 'bg-blue-50 text-blue-700 border-blue-200',
-	[ProgramCategory.Environment]: 'bg-green-50 text-green-700 border-green-200',
-	[ProgramCategory.Sports]: 'bg-orange-50 text-orange-700 border-orange-200',
-	[ProgramCategory.ArtsAndCulture]: 'bg-purple-50 text-purple-700 border-purple-200',
-	[ProgramCategory.Livelihood]: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-	[ProgramCategory.MentalHealth]: 'bg-pink-50 text-pink-700 border-pink-200',
-	[ProgramCategory.Scholarship]: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-};
-
-const statusBadge: Record<ApplicationStatus, string> = {
-	[ApplicationStatus.Pending]: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]',
-	[ApplicationStatus.UnderReview]: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-	[ApplicationStatus.Approved]: 'bg-green-50 text-green-700 border-green-200',
-	[ApplicationStatus.Rejected]: 'bg-red-50 text-[#d42b2b] border-red-200',
-};
-
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
 		month: 'short',
@@ -39,6 +25,13 @@ function formatDate(dateStr: string) {
 		year: 'numeric',
 	});
 }
+
+const COLS = [
+	{ label: 'Program' },
+	{ label: 'Category', center: true },
+	{ label: 'Submitted', center: true },
+	{ label: 'Status', center: true },
+] as const;
 
 export default function MyApplicationsPage() {
 	const { applications, cancelApplication } = useApplicationsStore();
@@ -60,182 +53,86 @@ export default function MyApplicationsPage() {
 	return (
 		<YouthLayout title="My Applications" noScroll>
 			<div className="flex flex-col h-full min-h-0">
-				<div className="flex-1 flex flex-col min-h-0 bg-white border border-[#e0e0e0]">
-					{/* Scrollable area */}
-					<div className="flex-1 overflow-y-scroll">
-						{/* Sticky header */}
-						<div className="sticky top-0 z-10 grid grid-cols-[2fr_1fr_1fr_1fr] border-b border-[#e0e0e0] bg-[#fafafa]">
-							{(
-								[
-									{ label: 'Program', center: false },
-									{ label: 'Category', center: true },
-									{ label: 'Submitted', center: true },
-									{ label: 'Status', center: true },
-								] as const
-							).map(({ label, center }) => (
-								<div
-									key={label}
-									className={`px-5 py-3 text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] ${center ? 'text-center' : ''}`}
-								>
-									{label}
-								</div>
-							))}
-						</div>
-
-						{/* Rows */}
-						{applications.length === 0 ? (
-							<div className="flex items-center justify-center h-40">
-								<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">
-									You have not submitted any applications yet.
+				<DataTable
+					columns={[...COLS]}
+					colsClass="grid-cols-[2fr_1fr_1fr_1fr]"
+					empty={applications.length === 0}
+					emptyMessage="You have not submitted any applications yet."
+					footer={`${applications.length} application${applications.length !== 1 ? 's' : ''}`}
+				>
+					{applications.map((app, i) => (
+						<button
+							key={app.id}
+							onClick={() => { setSelectedApp(app); setConfirmCancel(false); }}
+							className={`w-full text-left grid grid-cols-[2fr_1fr_1fr_1fr] hover:bg-[#fafafa] transition-colors cursor-pointer ${tableRowClass(i)}`}
+						>
+							<div className="px-5 py-3.5">
+								<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
+									{app.programTitle}
 								</p>
 							</div>
-						) : (
-							applications.map((app, i) => (
-								<button
-									key={app.id}
-									onClick={() => {
-										setSelectedApp(app);
-										setConfirmCancel(false);
-									}}
-									className={`w-full text-left grid grid-cols-[2fr_1fr_1fr_1fr] border-b border-[#f5f5f5] last:border-0 hover:bg-[#fafafa] transition-colors ${
-										i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'
-									}`}
-								>
-									<div className="px-5 py-3.5">
-										<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-											{app.programTitle}
-										</p>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center justify-center">
-										<span
-											className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${categoryBadge[app.programCategory]}`}
-										>
-											{PROGRAM_CATEGORY_LABELS[app.programCategory]}
-										</span>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center justify-center">
-										<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(app.submittedAt)}</p>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center justify-center">
-										<span
-											className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${statusBadge[app.status]}`}
-										>
-											{APPLICATION_STATUS_LABELS[app.status]}
-										</span>
-									</div>
-								</button>
-							))
-						)}
-					</div>
-
-					{/* Footer */}
-					<div className="shrink-0 border-t border-[#e0e0e0] px-5 py-2.5 bg-[#fafafa]">
-						<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans']">
-							{applications.length} application{applications.length !== 1 ? 's' : ''}
-						</p>
-					</div>
-				</div>
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<CategoryBadge category={app.programCategory} />
+							</div>
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(app.submittedAt)}</p>
+							</div>
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<StatusBadge status={app.status} />
+							</div>
+						</button>
+					))}
+				</DataTable>
 			</div>
 
 			{/* Detail modal */}
-			{selectedApp && (
-				<div
-					className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-					onClick={e => {
-						if (e.target === e.currentTarget) handleCloseModal();
-					}}
-				>
-					<div className="bg-white w-full max-w-lg shadow-xl flex flex-col max-h-[90vh]">
-						{/* Cover image */}
-						<div className="relative h-36 shrink-0 overflow-hidden">
-							<img
-								src={categoryImage[selectedApp.programCategory]}
-								alt={selectedApp.programTitle}
-								className="w-full h-full object-cover"
-							/>
-							<div className="absolute inset-0 bg-[#0d0d0d]/50" />
-							<button
-								onClick={handleCloseModal}
-								className="absolute top-3 right-3 text-white/70 hover:text-white transition-colors"
-							>
-								<X size={18} />
-							</button>
-							<div className="absolute bottom-3 left-5 flex items-center gap-2">
-								<span
-									className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${categoryBadge[selectedApp.programCategory]}`}
-								>
-									{PROGRAM_CATEGORY_LABELS[selectedApp.programCategory]}
-								</span>
-								<span
-									className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${statusBadge[selectedApp.status]}`}
-								>
-									{APPLICATION_STATUS_LABELS[selectedApp.status]}
-								</span>
-							</div>
-						</div>
+			<Modal open={!!selectedApp} onClose={handleCloseModal}>
+				{selectedApp && (
+					<>
+						<ModalCover
+							src={categoryImage[selectedApp.programCategory]}
+							alt={selectedApp.programTitle}
+							onClose={handleCloseModal}
+						>
+							<CategoryBadge category={selectedApp.programCategory} />
+							<StatusBadge status={selectedApp.status} />
+						</ModalCover>
 
-						{/* Header */}
-						<div className="shrink-0 px-6 py-4 border-b border-[#e0e0e0]">
-							<h2 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-tight">
-								{selectedApp.programTitle}
-							</h2>
+						<ModalHeader title={selectedApp.programTitle}>
 							<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-1">
 								Submitted {formatDate(selectedApp.submittedAt)}
 							</p>
-						</div>
+						</ModalHeader>
 
-						{/* Description — scrollable */}
-						<div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
-							<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
+						<ModalBody>
+							<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] mb-3">
 								About this Program
 							</p>
 							<p className="text-sm font-['Instrument_Sans'] text-[#0d0d0d] leading-relaxed">
 								{selectedApp.programDescription}
 							</p>
-						</div>
+						</ModalBody>
 
-						{/* Footer */}
-						<div className="shrink-0 flex items-center justify-between px-6 py-4 border-t border-[#e0e0e0]">
+						<ModalFooter>
 							<div>
 								{selectedApp.status === ApplicationStatus.Pending &&
 									(confirmCancel ? (
 										<div className="flex items-center gap-3">
 											<p className="text-xs text-[#0d0d0d] font-['Instrument_Sans']">Cancel this application?</p>
-											<button
-												onClick={handleCancel}
-												className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-white bg-[#d42b2b] px-3 py-1.5 hover:bg-[#b82424] transition-colors"
-											>
-												Yes, Cancel
-											</button>
-											<button
-												onClick={() => setConfirmCancel(false)}
-												className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
-											>
-												No
-											</button>
+											<Btn variant="danger" size="sm" onClick={handleCancel}>Yes, Cancel</Btn>
+											<Btn variant="ghost" size="sm" onClick={() => setConfirmCancel(false)}>No</Btn>
 										</div>
 									) : (
-										<button
-											onClick={() => setConfirmCancel(true)}
-											className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#d42b2b] border border-[#d42b2b] px-3 py-1.5 hover:bg-red-50 transition-colors"
-										>
+										<Btn variant="danger-outline" size="sm" onClick={() => setConfirmCancel(true)}>
 											Cancel Application
-										</button>
+										</Btn>
 									))}
 							</div>
-							<button
-								onClick={handleCloseModal}
-								className="text-sm font-['Instrument_Sans'] font-medium text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors px-4 py-2"
-							>
-								Close
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+							<Btn variant="ghost" onClick={handleCloseModal} className="px-4 py-2 text-sm">Close</Btn>
+						</ModalFooter>
+					</>
+				)}
+			</Modal>
 		</YouthLayout>
 	);
 }

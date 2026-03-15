@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, X, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ImageIcon } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AnnouncementCategory, ANNOUNCEMENT_CATEGORY_LABELS } from '@/types';
 import type { Announcement } from '@/types';
+import { AnnouncementBadge } from '@/components/shared/Badge';
+import { Btn } from '@/components/shared/Btn';
+import { DataTable, tableRowClass } from '@/components/shared/DataTable';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
+import { FormField, FieldInput, FieldTextarea, FieldSelect } from '@/components/shared/FormField';
+import { SearchInput } from '@/components/shared/SearchInput';
 
 // --- Mock data (replace with API calls once backend is ready) ---
 const initialAnnouncements: Announcement[] = [
@@ -42,17 +48,6 @@ const initialAnnouncements: Announcement[] = [
 		createdAt: '2026-02-25',
 	},
 ];
-
-const categoryBadge: Record<AnnouncementCategory, string> = {
-	[AnnouncementCategory.New]: 'bg-[#d42b2b] text-white',
-	[AnnouncementCategory.Event]: 'bg-[#0d0d0d] text-white',
-	[AnnouncementCategory.YORP]: 'bg-[#f5f5f5] text-[#0d0d0d] border border-[#e0e0e0]',
-	[AnnouncementCategory.Update]: 'bg-[#f5f5f5] text-[#0d0d0d] border border-[#e0e0e0]',
-};
-
-const labelClass = "text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#0d0d0d]";
-const inputClass =
-	"border border-[#e0e0e0] px-3 py-2.5 text-sm font-['Instrument_Sans'] text-[#0d0d0d] placeholder:text-[#aaaaaa] focus:outline-none focus:border-[#0d0d0d] transition-colors bg-white";
 
 interface AnnouncementForm {
 	title: string;
@@ -115,8 +110,7 @@ export default function ManageAnnouncementsPage() {
 	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
 		if (!file) return;
-		const url = URL.createObjectURL(file);
-		setImagePreview(url);
+		setImagePreview(URL.createObjectURL(file));
 	}
 
 	function validate(): boolean {
@@ -163,21 +157,18 @@ export default function ManageAnnouncementsPage() {
 		<AdminLayout title="Announcements" description="Post and manage CYDAO announcements." noScroll>
 			<div className="flex flex-col h-full gap-4 min-h-0">
 				{/* Toolbar */}
-				<div className="shrink-0 flex items-center gap-3 flex-wrap">
-					<div className="relative">
-						<Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaaaaa]" />
-						<input
-							value={search}
-							onChange={e => setSearch(e.target.value)}
-							placeholder="Search announcements..."
-							className="pl-9 pr-4 py-2 text-sm border border-[#e0e0e0] bg-white font-['Instrument_Sans'] text-[#0d0d0d] placeholder:text-[#aaaaaa] focus:outline-none focus:border-[#0d0d0d] transition-colors w-56"
-						/>
-					</div>
+				<div className="shrink-0 flex items-center gap-3">
+					<SearchInput
+						value={search}
+						onChange={e => setSearch(e.target.value)}
+						placeholder="Search announcements..."
+						containerClassName="w-56"
+					/>
 
-					<select
+					<FieldSelect
 						value={categoryFilter}
 						onChange={e => setCategoryFilter(Number(e.target.value))}
-						className="py-2 px-3 text-sm border border-[#e0e0e0] bg-white font-['Instrument_Sans'] text-[#0d0d0d] focus:outline-none focus:border-[#0d0d0d] transition-colors cursor-pointer"
+						className="w-44! py-2 text-[11px] font-bold uppercase tracking-[1px]"
 					>
 						<option value={ALL}>All Categories</option>
 						{Object.entries(ANNOUNCEMENT_CATEGORY_LABELS).map(([value, label]) => (
@@ -185,246 +176,151 @@ export default function ManageAnnouncementsPage() {
 								{label}
 							</option>
 						))}
-					</select>
+					</FieldSelect>
 
 					<div className="flex-1" />
 
-					<button
-						onClick={openCreate}
-						className="flex items-center gap-2 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors shrink-0"
-					>
+					<Btn variant="primary" size="md" onClick={openCreate} className="flex items-center gap-2 shrink-0">
 						<Plus size={14} /> New Announcement
-					</button>
+					</Btn>
 				</div>
 
 				{/* Table */}
-				<div className="flex-1 flex flex-col min-h-0 bg-white border border-[#e0e0e0]">
-					{/* Scrollable area — header is sticky inside so widths always match */}
-					<div className="flex-1 overflow-y-scroll">
-						{/* Sticky header */}
-						<div className="sticky top-0 z-10 grid grid-cols-[2fr_1fr_1fr_120px] border-b border-[#e0e0e0] bg-[#fafafa]">
-							{(
-								[
-									{ label: 'Title', center: false },
-									{ label: 'Category', center: true },
-									{ label: 'Date', center: true },
-									{ label: 'Actions', center: true },
-								] as const
-							).map(({ label, center }) => (
-								<div
-									key={label}
-									className={`px-5 py-3 text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] ${center ? 'text-center' : ''}`}
-								>
-									{label}
-								</div>
-							))}
-						</div>
-
-						{/* Rows */}
-						{filtered.length === 0 ? (
-							<div className="flex items-center justify-center h-40">
-								<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">No announcements match your filters.</p>
+				<DataTable
+					columns={[
+						{ label: 'Title' },
+						{ label: 'Category', center: true },
+						{ label: 'Date', center: true },
+						{ label: 'Actions', center: true },
+					]}
+					colsClass="grid-cols-[2fr_1fr_1fr_120px]"
+					empty={filtered.length === 0}
+					emptyMessage="No announcements match your filters."
+					footer={`Showing ${filtered.length} of ${announcements.length} announcements`}
+				>
+					{filtered.map((announcement, i) => (
+						<div key={announcement.id} className={`grid grid-cols-[2fr_1fr_1fr_120px] ${tableRowClass(i)}`}>
+							<div className="px-5 py-3.5">
+								<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
+									{announcement.title}
+								</p>
+								<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
+									{announcement.body}
+								</p>
 							</div>
-						) : (
-							filtered.map((announcement, i) => (
-								<div
-									key={announcement.id}
-									className={`grid grid-cols-[2fr_1fr_1fr_120px] border-b border-[#f5f5f5] last:border-0 ${
-										i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'
-									}`}
-								>
-									<div className="px-5 py-3.5">
-										<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-											{announcement.title}
-										</p>
-										<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
-											{announcement.body}
-										</p>
-									</div>
 
-									<div className="px-5 py-3.5 flex items-center justify-center">
-										<span
-											className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 ${categoryBadge[announcement.category]}`}
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<AnnouncementBadge category={announcement.category} />
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(announcement.createdAt)}</p>
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center justify-center gap-3">
+								{confirmDeleteId === announcement.id ? (
+									<>
+										<Btn variant="danger" size="sm" onClick={() => handleDelete(announcement.id)}>
+											Yes
+										</Btn>
+										<Btn variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>
+											No
+										</Btn>
+									</>
+								) : (
+									<>
+										<Btn variant="icon" onClick={() => openEdit(announcement)} title="Edit">
+											<Pencil size={14} />
+										</Btn>
+										<Btn
+											variant="icon"
+											onClick={() => setConfirmDeleteId(announcement.id)}
+											title="Delete"
+											className="hover:text-[#d42b2b]"
 										>
-											{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
-										</span>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center justify-center">
-										<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">
-											{formatDate(announcement.createdAt)}
-										</p>
-									</div>
-
-									<div className="px-5 py-3.5 flex items-center justify-center gap-3">
-										{confirmDeleteId === announcement.id ? (
-											<>
-												<button
-													onClick={() => handleDelete(announcement.id)}
-													className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-white bg-[#d42b2b] px-2 py-1 hover:bg-[#b82424] transition-colors"
-												>
-													Yes
-												</button>
-												<button
-													onClick={() => setConfirmDeleteId(null)}
-													className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
-												>
-													No
-												</button>
-											</>
-										) : (
-											<>
-												<button
-													onClick={() => openEdit(announcement)}
-													title="Edit"
-													className="text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors"
-												>
-													<Pencil size={14} />
-												</button>
-												<button
-													onClick={() => setConfirmDeleteId(announcement.id)}
-													title="Delete"
-													className="text-[#aaaaaa] hover:text-[#d42b2b] transition-colors"
-												>
-													<Trash2 size={14} />
-												</button>
-											</>
-										)}
-									</div>
-								</div>
-							))
-						)}
-					</div>
-
-					{/* Footer count */}
-					<div className="shrink-0 border-t border-[#e0e0e0] px-5 py-2.5 bg-[#fafafa]">
-						<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans']">
-							Showing {filtered.length} of {announcements.length} announcements
-						</p>
-					</div>
-				</div>
+											<Trash2 size={14} />
+										</Btn>
+									</>
+								)}
+							</div>
+						</div>
+					))}
+				</DataTable>
 			</div>
 
 			{/* Create / Edit Modal */}
-			{modalOpen && (
-				<div
-					className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-					onClick={e => {
-						if (e.target === e.currentTarget) closeModal();
-					}}
-				>
-					<div className="bg-white w-full max-w-lg shadow-xl">
-						{/* Modal header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-[#e0e0e0]">
-							<div>
-								<p className="text-[10px] font-bold tracking-[3px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
-									{editingId !== null ? 'Edit' : 'New'}
-								</p>
-								<h2 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] leading-tight">
-									{editingId !== null ? 'Edit Announcement' : 'Create Announcement'}
-								</h2>
-							</div>
-							<button onClick={closeModal} className="text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors">
-								<X size={18} />
-							</button>
-						</div>
+			<Modal open={modalOpen} onClose={closeModal}>
+				<ModalHeader
+					title={editingId !== null ? 'Edit Announcement' : 'Create Announcement'}
+					eyebrow={editingId !== null ? 'Edit' : 'New'}
+					onClose={closeModal}
+				/>
 
-						{/* Modal form */}
-						<div className="px-6 py-5 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-							<div className="flex flex-col gap-1.5">
-								<label className={labelClass}>Title</label>
-								<input
-									value={form.title}
-									onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-									placeholder="e.g. Application Period Now Open for Leadership Program"
-									className={inputClass + ' w-full'}
-								/>
-								{formErrors.title && (
-									<p className="text-xs text-[#d42b2b] font-['Instrument_Sans']">{formErrors.title}</p>
-								)}
-							</div>
+				<ModalBody scroll className="flex flex-col gap-4 max-h-[70vh]">
+					<FormField label="Title" error={formErrors.title}>
+						<FieldInput
+							value={form.title}
+							onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+							placeholder="e.g. Application Period Now Open for Leadership Program"
+						/>
+					</FormField>
 
-							<div className="flex flex-col gap-1.5">
-								<label className={labelClass}>Body</label>
-								<textarea
-									value={form.body}
-									onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
-									placeholder="Write the announcement content here..."
-									rows={5}
-									className={inputClass + ' w-full resize-none'}
-								/>
-								{formErrors.body && (
-									<p className="text-xs text-[#d42b2b] font-['Instrument_Sans']">{formErrors.body}</p>
-								)}
-							</div>
+					<FormField label="Body" error={formErrors.body}>
+						<FieldTextarea
+							value={form.body}
+							onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
+							placeholder="Write the announcement content here..."
+							rows={5}
+						/>
+					</FormField>
 
-							<div className="flex flex-col gap-1.5">
-								<label className={labelClass}>Cover Image</label>
-								{imagePreview ? (
-									<div className="relative">
-										<img
-											src={imagePreview}
-											alt="Preview"
-											className="w-full h-40 object-cover border border-[#e0e0e0]"
-										/>
-										<button
-											type="button"
-											onClick={() => setImagePreview(null)}
-											className="absolute top-2 right-2 bg-white border border-[#e0e0e0] p-1 text-[#aaaaaa] hover:text-[#d42b2b] transition-colors"
-										>
-											<X size={13} />
-										</button>
-									</div>
-								) : (
-									<label className="flex flex-col items-center justify-center gap-2 h-28 border border-dashed border-[#e0e0e0] bg-[#fafafa] hover:border-[#0d0d0d] transition-colors cursor-pointer">
-										<ImageIcon size={20} className="text-[#aaaaaa]" />
-										<span className="text-xs text-[#aaaaaa] font-['Instrument_Sans']">
-											Click to upload an image
-										</span>
-										<input
-											type="file"
-											accept="image/*"
-											className="hidden"
-											onChange={handleImageChange}
-										/>
-									</label>
-								)}
-							</div>
-
-							<div className="flex flex-col gap-1.5">
-								<label className={labelClass}>Category</label>
-								<select
-									value={form.category}
-									onChange={e => setForm(f => ({ ...f, category: Number(e.target.value) }))}
-									className={inputClass + ' w-full cursor-pointer'}
+					<FormField label="Cover Image">
+						{imagePreview ? (
+							<div className="relative">
+								<img src={imagePreview} alt="Preview" className="w-full h-40 object-cover border border-[#e0e0e0]" />
+								<button
+									type="button"
+									onClick={() => setImagePreview(null)}
+									className="absolute top-2 right-2 bg-white border border-[#e0e0e0] p-1 text-[#aaaaaa] hover:text-[#d42b2b] transition-colors cursor-pointer"
 								>
-									{Object.entries(ANNOUNCEMENT_CATEGORY_LABELS).map(([value, label]) => (
-										<option key={value} value={value}>
-											{label}
-										</option>
-									))}
-								</select>
+									<X size={13} />
+								</button>
 							</div>
-						</div>
+						) : (
+							<label className="flex flex-col items-center justify-center gap-2 h-28 border border-dashed border-[#e0e0e0] bg-[#fafafa] hover:border-[#0d0d0d] transition-colors cursor-pointer">
+								<ImageIcon size={20} className="text-[#aaaaaa]" />
+								<span className="text-xs text-[#aaaaaa] font-['Instrument_Sans']">Click to upload an image</span>
+								<input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+							</label>
+						)}
+					</FormField>
 
-						{/* Modal footer */}
-						<div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e0e0e0]">
-							<button
-								onClick={closeModal}
-								className="text-sm font-['Instrument_Sans'] font-medium text-[#aaaaaa] hover:text-[#0d0d0d] transition-colors px-4 py-2"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleSave}
-								className="bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-6 py-2.5 hover:bg-[#b82424] transition-colors"
-							>
-								{editingId !== null ? 'Save Changes' : 'Create Announcement'}
-							</button>
-						</div>
+					<FormField label="Category">
+						<FieldSelect
+							value={form.category}
+							onChange={e => setForm(f => ({ ...f, category: Number(e.target.value) }))}
+						>
+							{Object.entries(ANNOUNCEMENT_CATEGORY_LABELS).map(([value, label]) => (
+								<option key={value} value={value}>
+									{label}
+								</option>
+							))}
+						</FieldSelect>
+					</FormField>
+				</ModalBody>
+
+				<ModalFooter>
+					<div />
+					<div className="flex items-center gap-3">
+						<Btn variant="ghost" onClick={closeModal} className="px-4 py-2 text-sm">
+							Cancel
+						</Btn>
+						<Btn variant="primary" size="lg" onClick={handleSave}>
+							{editingId !== null ? 'Save Changes' : 'Create Announcement'}
+						</Btn>
 					</div>
-				</div>
-			)}
+				</ModalFooter>
+			</Modal>
 		</AdminLayout>
 	);
 }
