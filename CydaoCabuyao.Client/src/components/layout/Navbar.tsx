@@ -46,31 +46,6 @@ export function Navbar() {
 							{label}
 						</NavLink>
 					))}
-
-					{user?.role === UserRole.Staff && (
-						<NavLink
-							to="/admin"
-							className={({ isActive }) =>
-								`text-sm font-medium font-['Instrument_Sans'] transition-colors ${
-									isActive ? 'text-[#d42b2b]' : 'text-[#0d0d0d] hover:text-[#d42b2b]'
-								}`
-							}
-						>
-							Admin
-						</NavLink>
-					)}
-					{user?.role === UserRole.Youth && (
-						<NavLink
-							to="/dashboard"
-							className={({ isActive }) =>
-								`text-sm font-medium font-['Instrument_Sans'] transition-colors ${
-									isActive ? 'text-[#d42b2b]' : 'text-[#0d0d0d] hover:text-[#d42b2b]'
-								}`
-							}
-						>
-							Dashboard
-						</NavLink>
-					)}
 				</nav>
 
 				{/* Auth area */}
@@ -78,7 +53,7 @@ export function Navbar() {
 					{user ? (
 						<>
 							<Link
-								to={user.role === UserRole.Staff ? '/admin' : '/profile'}
+								to={user.role === UserRole.Staff ? '/admin/programs' : '/profile'}
 								className="flex items-center gap-2 text-sm font-medium text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
 							>
 								<User size={16} />

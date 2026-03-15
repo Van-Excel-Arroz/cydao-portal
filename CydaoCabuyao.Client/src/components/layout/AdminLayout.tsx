@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-	LayoutDashboard,
 	BookOpen,
 	Calendar,
 	Megaphone,
@@ -14,7 +13,6 @@ import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
-	{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
 	{ to: '/admin/programs', label: 'Programs', icon: BookOpen, end: false },
 	{ to: '/admin/events', label: 'Events', icon: Calendar, end: false },
 	{ to: '/admin/announcements', label: 'Announcements', icon: Megaphone, end: false },

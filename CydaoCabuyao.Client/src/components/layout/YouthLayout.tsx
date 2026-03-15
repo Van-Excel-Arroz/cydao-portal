@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarCheck, User, Menu, LogOut, ChevronRight } from 'lucide-react';
+import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
-	{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+	{ to: '/profile', label: 'Profile', icon: User, end: false },
 	{ to: '/my-applications', label: 'My Applications', icon: FileText, end: false },
 	{ to: '/my-registrations', label: 'My Registrations', icon: CalendarCheck, end: false },
-	{ to: '/profile', label: 'Profile', icon: User, end: false },
 ];
 
 interface YouthLayoutProps {

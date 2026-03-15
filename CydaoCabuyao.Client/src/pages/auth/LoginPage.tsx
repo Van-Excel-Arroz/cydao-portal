@@ -64,7 +64,7 @@ export default function LoginPage() {
 	});
 
 	if (user) {
-		return <Navigate to={user.role === UserRole.Staff ? '/admin' : '/dashboard'} replace />;
+		return <Navigate to={user.role === UserRole.Staff ? '/admin/programs' : '/profile'} replace />;
 	}
 
 	async function onSubmit(data: LoginFormData) {
@@ -74,14 +74,14 @@ export default function LoginPage() {
 		const mock = MOCK_USERS[data.email];
 		if (mock && mock.password === data.password) {
 			setAuth(mock.user, mock.token);
-			navigate(mock.user.role === UserRole.Staff ? '/admin' : '/dashboard');
+			navigate(mock.user.role === UserRole.Staff ? '/admin/programs' : '/profile');
 			return;
 		}
 
 		try {
 			const res = await api.post<AuthResponse>('/auth/login', data);
 			setAuth(res.data.user, res.data.token);
-			navigate(res.data.user.role === UserRole.Staff ? '/admin' : '/dashboard');
+			navigate(res.data.user.role === UserRole.Staff ? '/admin/programs' : '/profile');
 		} catch (err: unknown) {
 			const message =
 				err instanceof Error && 'response' in err
@@ -100,7 +100,11 @@ export default function LoginPage() {
 				</div>
 				<div>
 					<h1 className="font-['Syne'] font-black text-6xl leading-[1.05] tracking-tight">
-						Empowering<br />Cabuyao's<br />Youth.
+						Empowering
+						<br />
+						Cabuyao's
+						<br />
+						Youth.
 					</h1>
 					<div className="mt-10 h-px bg-white/25 w-full" />
 					<p className="mt-6 font-['Instrument_Sans'] text-sm text-white/75 leading-relaxed max-w-xs">
@@ -116,9 +120,7 @@ export default function LoginPage() {
 			<div className="flex items-center justify-center px-8 py-16 bg-white">
 				<div className="w-full max-w-md">
 					<p className="eyebrow text-[#aaaaaa]">Sign In</p>
-					<h2 className="mt-5 font-['Syne'] font-bold text-4xl text-[#0d0d0d] leading-tight">
-						Welcome back.
-					</h2>
+					<h2 className="mt-5 font-['Syne'] font-bold text-4xl text-[#0d0d0d] leading-tight">Welcome back.</h2>
 					<p className="mt-3 text-sm text-[#aaaaaa] font-['Instrument_Sans']">
 						Don't have an account?{' '}
 						<Link to="/register" className="text-[#d42b2b] font-semibold hover:underline">
@@ -127,7 +129,7 @@ export default function LoginPage() {
 					</p>
 
 					{/* Dev hint */}
-				<div className="mt-8 border border-dashed border-[#e0e0e0] px-4 py-3 space-y-1">
+					<div className="mt-8 border border-dashed border-[#e0e0e0] px-4 py-3 space-y-1">
 						<p className="text-[10px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
 							Test Credentials
 						</p>

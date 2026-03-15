@@ -12,12 +12,10 @@ import AboutPage from '@/pages/public/AboutPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 
-import DashboardPage from '@/pages/youth/DashboardPage';
 import MyApplicationsPage from '@/pages/youth/MyApplicationsPage';
 import MyRegistrationsPage from '@/pages/youth/MyRegistrationsPage';
 import ProfilePage from '@/pages/youth/ProfilePage';
 
-import AdminDashboardPage from '@/pages/staff/AdminDashboardPage';
 import ManageProgramsPage from '@/pages/staff/ManageProgramsPage';
 import ManageEventsPage from '@/pages/staff/ManageEventsPage';
 import ManageAnnouncementsPage from '@/pages/staff/ManageAnnouncementsPage';
@@ -42,7 +40,6 @@ function App() {
 
 			{/* Youth routes */}
 			<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
-				<Route path="/dashboard" element={<DashboardPage />} />
 				<Route path="/my-applications" element={<MyApplicationsPage />} />
 				<Route path="/my-registrations" element={<MyRegistrationsPage />} />
 				<Route path="/profile" element={<ProfilePage />} />
@@ -50,7 +47,6 @@ function App() {
 
 			{/* Staff routes */}
 			<Route element={<ProtectedRoute allowedRole={UserRole.Staff} />}>
-				<Route path="/admin" element={<AdminDashboardPage />} />
 				<Route path="/admin/programs" element={<ManageProgramsPage />} />
 				<Route path="/admin/events" element={<ManageEventsPage />} />
 				<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
