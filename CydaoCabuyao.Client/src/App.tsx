@@ -13,6 +13,7 @@ import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 
 import YouthProgramsPage from '@/pages/youth/YouthProgramsPage';
+import YouthEventsPage from '@/pages/youth/YouthEventsPage';
 import MyApplicationsPage from '@/pages/youth/MyApplicationsPage';
 import MyRegistrationsPage from '@/pages/youth/MyRegistrationsPage';
 import ProfilePage from '@/pages/youth/ProfilePage';
@@ -43,6 +44,7 @@ function App() {
 			<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
 				<Route path="/youth/profile" element={<ProfilePage />} />
 				<Route path="/youth/programs" element={<YouthProgramsPage />} />
+				<Route path="/youth/events" element={<YouthEventsPage />} />
 				<Route path="/youth/my-applications" element={<MyApplicationsPage />} />
 				<Route path="/youth/my-registrations" element={<MyRegistrationsPage />} />
 			</Route>

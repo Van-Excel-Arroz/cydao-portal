@@ -1,59 +1,8 @@
 import { useState } from 'react';
 import { X, MapPin, Calendar, Users } from 'lucide-react';
 import { YouthLayout } from '@/components/layout/YouthLayout';
-
-interface MyRegistration {
-	id: number;
-	eventTitle: string;
-	eventDescription: string;
-	startDate: string;
-	endDate: string;
-	venue: string;
-	availableSlots: number;
-	registeredAt: string;
-}
-
-const eventImages: Record<number, string> = {
-	1: 'https://picsum.photos/seed/event-kabataan/800/300',
-	2: 'https://picsum.photos/seed/event-livelihood/800/300',
-	3: 'https://picsum.photos/seed/event-sports/800/300',
-};
-
-const initialRegistrations: MyRegistration[] = [
-	{
-		id: 1,
-		eventTitle: 'Kabataan Caravan 2026',
-		eventDescription:
-			'An annual multi-day youth development caravan traversing all 18 barangays of Cabuyao. Activities include leadership talks, health services, livelihood demonstrations, and cultural presentations. All registered participants are expected to attend at least three barangay stops and assist in facilitating activities.',
-		startDate: '2026-04-10T08:00:00Z',
-		endDate: '2026-04-12T17:00:00Z',
-		venue: 'Various Barangays, Cabuyao City',
-		availableSlots: 12,
-		registeredAt: '2026-03-02T09:00:00Z',
-	},
-	{
-		id: 2,
-		eventTitle: 'Livelihood Skills Fair',
-		eventDescription:
-			'A two-day skills fair featuring booths and hands-on stations for cooking, digital marketing, welding, dressmaking, and basic electronics repair. Participants may attend any or all stations and will receive a certificate of participation upon completing at least four stations.',
-		startDate: '2026-04-25T09:00:00Z',
-		endDate: '2026-04-26T16:00:00Z',
-		venue: 'Cabuyao City Hall Grounds',
-		availableSlots: 3,
-		registeredAt: '2026-03-06T14:30:00Z',
-	},
-	{
-		id: 3,
-		eventTitle: 'Inter-Barangay Sports Cup',
-		eventDescription:
-			'Annual inter-barangay sports competition open to youth aged 15–30. Events include basketball, volleyball, badminton, and athletics. Teams must be registered by barangay. Individual participants may join athletics events. Medals and certificates will be awarded to top three finishers in each category.',
-		startDate: '2026-05-03T07:00:00Z',
-		endDate: '2026-05-04T18:00:00Z',
-		venue: 'Cabuyao Sports Complex',
-		availableSlots: 28,
-		registeredAt: '2026-03-10T11:00:00Z',
-	},
-];
+import { useRegistrationsStore } from '@/stores/registrationsStore';
+import type { StoredRegistration } from '@/stores/registrationsStore';
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -74,13 +23,13 @@ function formatDateRange(start: string, end: string) {
 }
 
 export default function MyRegistrationsPage() {
-	const [registrations, setRegistrations] = useState<MyRegistration[]>(initialRegistrations);
-	const [selectedReg, setSelectedReg] = useState<MyRegistration | null>(null);
+	const { registrations, cancelRegistration } = useRegistrationsStore();
+	const [selectedReg, setSelectedReg] = useState<StoredRegistration | null>(null);
 	const [confirmCancel, setConfirmCancel] = useState(false);
 
 	function handleCancel() {
 		if (!selectedReg) return;
-		setRegistrations(prev => prev.filter(r => r.id !== selectedReg.id));
+		cancelRegistration(selectedReg.id);
 		setSelectedReg(null);
 		setConfirmCancel(false);
 	}
@@ -150,7 +99,7 @@ export default function MyRegistrationsPage() {
 									</div>
 
 									<div className="px-5 py-3.5 flex items-center justify-center">
-										<span className={`text-sm font-semibold font-['Instrument_Sans'] ${reg.availableSlots <= 5 ? 'text-[#d42b2b]' : 'text-[#0d0d0d]'}`}>
+										<span className={`text-sm font-semibold font-['Instrument_Sans'] ${reg.availableSlots <= 10 ? 'text-[#d42b2b]' : 'text-[#0d0d0d]'}`}>
 											{reg.availableSlots}
 										</span>
 									</div>
@@ -178,7 +127,7 @@ export default function MyRegistrationsPage() {
 						{/* Cover image */}
 						<div className="relative h-36 shrink-0 overflow-hidden">
 							<img
-								src={eventImages[selectedReg.id]}
+								src={`https://picsum.photos/seed/ev${selectedReg.eventId}/800/300`}
 								alt={selectedReg.eventTitle}
 								className="w-full h-full object-cover"
 							/>
@@ -201,7 +150,7 @@ export default function MyRegistrationsPage() {
 							</p>
 						</div>
 
-						{/* Event details — fixed */}
+						{/* Event details */}
 						<div className="shrink-0 px-6 pt-5 pb-4 flex flex-col gap-2 border-b border-[#e0e0e0]">
 							<div className="flex items-center gap-2 text-sm font-['Instrument_Sans'] text-[#0d0d0d]">
 								<Calendar size={13} className="shrink-0 text-[#aaaaaa]" />
@@ -213,13 +162,13 @@ export default function MyRegistrationsPage() {
 							</div>
 							<div className="flex items-center gap-2 text-sm font-['Instrument_Sans']">
 								<Users size={13} className="shrink-0 text-[#aaaaaa]" />
-								<span className={selectedReg.availableSlots <= 5 ? 'text-[#d42b2b] font-semibold' : 'text-[#0d0d0d]'}>
+								<span className={selectedReg.availableSlots <= 10 ? 'text-[#d42b2b] font-semibold' : 'text-[#0d0d0d]'}>
 									{selectedReg.availableSlots} slot{selectedReg.availableSlots !== 1 ? 's' : ''} remaining
 								</span>
 							</div>
 						</div>
 
-						{/* Description — expands */}
+						{/* Description — scrollable */}
 						<div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
 							<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
 								About this Event

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
-import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight, BookOpen } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight, BookOpen, CalendarDays } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
 	{ to: '/youth/profile', label: 'Profile', icon: User, end: false },
 	{ to: '/youth/programs', label: 'Programs', icon: BookOpen, end: false },
+	{ to: '/youth/events', label: 'Events', icon: CalendarDays, end: false },
 	{ to: '/youth/my-applications', label: 'My Applications', icon: FileText, end: false },
 	{ to: '/youth/my-registrations', label: 'My Registrations', icon: CalendarCheck, end: false },
 ];
@@ -23,8 +24,6 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 	const [collapsed, setCollapsed] = useState(false);
 	const { user, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
-	const location = useLocation();
-	const isMyRegistrations = location.pathname === '/youth/my-registrations';
 
 	function handleLogout() {
 		clearAuth();
@@ -134,15 +133,6 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 						<h1 className="font-['Syne'] font-bold text-xl text-[#0d0d0d] leading-tight">{title}</h1>
 						{description && <p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5">{description}</p>}
 					</div>
-
-					{isMyRegistrations && (
-						<Link
-							to="/events"
-							className="shrink-0 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors"
-						>
-							Browse Events
-						</Link>
-					)}
 				</div>
 
 				{/* Page content */}
