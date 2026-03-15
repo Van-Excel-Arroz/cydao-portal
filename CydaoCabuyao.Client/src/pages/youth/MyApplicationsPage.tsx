@@ -2,16 +2,8 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { YouthLayout } from '@/components/layout/YouthLayout';
 import { ApplicationStatus, APPLICATION_STATUS_LABELS, ProgramCategory, PROGRAM_CATEGORY_LABELS } from '@/types';
-
-interface MyApplication {
-	id: number;
-	programTitle: string;
-	programCategory: ProgramCategory;
-	programDescription: string;
-	motivation: string;
-	status: ApplicationStatus;
-	submittedAt: string;
-}
+import { useApplicationsStore } from '@/stores/applicationsStore';
+import type { StoredApplication } from '@/stores/applicationsStore';
 
 const categoryImage: Record<ProgramCategory, string> = {
 	[ProgramCategory.Leadership]: 'https://picsum.photos/seed/prog-leadership/800/300',
@@ -22,42 +14,6 @@ const categoryImage: Record<ProgramCategory, string> = {
 	[ProgramCategory.MentalHealth]: 'https://picsum.photos/seed/prog-mentalhealth/800/300',
 	[ProgramCategory.Scholarship]: 'https://picsum.photos/seed/prog-scholarship/800/300',
 };
-
-const initialApplications: MyApplication[] = [
-	{
-		id: 1,
-		programTitle: 'Leadership Development Program',
-		programCategory: ProgramCategory.Leadership,
-		programDescription:
-			'A comprehensive leadership training program for youth aged 15–30 from all barangays of Cabuyao. Participants will undergo workshops on public speaking, community organizing, project management, and ethical leadership. The program culminates in a capstone project where participants implement a community initiative in their own barangay.',
-		motivation:
-			'I want to develop my leadership skills to serve my community better and become a role model for other youth in Cabuyao.',
-		status: ApplicationStatus.Approved,
-		submittedAt: '2026-03-01T10:00:00Z',
-	},
-	{
-		id: 2,
-		programTitle: 'Environmental Awareness Campaign',
-		programCategory: ProgramCategory.Environment,
-		programDescription:
-			'Community-based environmental program focusing on waste segregation, tree planting, and river cleanup across all barangays of Cabuyao. Volunteers will participate in monthly cleanup drives, attend environmental education sessions, and help facilitate awareness campaigns in local schools and barangay halls.',
-		motivation:
-			'Environmental protection is close to my heart. I want to make a tangible impact in keeping Cabuyao clean and green.',
-		status: ApplicationStatus.UnderReview,
-		submittedAt: '2026-03-05T08:00:00Z',
-	},
-	{
-		id: 3,
-		programTitle: 'Sining at Kultura Workshop',
-		programCategory: ProgramCategory.ArtsAndCulture,
-		programDescription:
-			'Arts and cultural workshop celebrating Filipino heritage through visual arts, dance, and music. The program runs over eight weekends and covers traditional Filipino folk dances, indigenous visual art forms, and musical instruments. Participants will showcase their work in the annual CYDAO Cultural Festival held at the Cabuyao City Plaza.',
-		motivation:
-			'Art is my passion. I want to use this workshop to hone my skills and represent our barangay in cultural activities.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-08T11:00:00Z',
-	},
-];
 
 const categoryBadge: Record<ProgramCategory, string> = {
 	[ProgramCategory.Leadership]: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -85,13 +41,13 @@ function formatDate(dateStr: string) {
 }
 
 export default function MyApplicationsPage() {
-	const [applications, setApplications] = useState<MyApplication[]>(initialApplications);
-	const [selectedApp, setSelectedApp] = useState<MyApplication | null>(null);
+	const { applications, cancelApplication } = useApplicationsStore();
+	const [selectedApp, setSelectedApp] = useState<StoredApplication | null>(null);
 	const [confirmCancel, setConfirmCancel] = useState(false);
 
 	function handleCancel() {
 		if (!selectedApp) return;
-		setApplications(prev => prev.filter(a => a.id !== selectedApp.id));
+		cancelApplication(selectedApp.id);
 		setSelectedApp(null);
 		setConfirmCancel(false);
 	}
@@ -231,8 +187,8 @@ export default function MyApplicationsPage() {
 							</p>
 						</div>
 
-						{/* Body */}
-						<div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+						{/* Description — scrollable */}
+						<div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
 							<p className="text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
 								About this Program
 							</p>

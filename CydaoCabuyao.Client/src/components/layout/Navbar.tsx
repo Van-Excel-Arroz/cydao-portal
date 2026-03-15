@@ -53,7 +53,7 @@ export function Navbar() {
 					{user ? (
 						<>
 							<Link
-								to={user.role === UserRole.Staff ? '/admin/programs' : '/profile'}
+								to={user.role === UserRole.Staff ? '/admin/programs' : '/youth/profile'}
 								className="flex items-center gap-2 text-sm font-medium text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
 							>
 								<User size={16} />

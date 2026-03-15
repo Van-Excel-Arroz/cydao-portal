@@ -12,6 +12,7 @@ import AboutPage from '@/pages/public/AboutPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 
+import YouthProgramsPage from '@/pages/youth/YouthProgramsPage';
 import MyApplicationsPage from '@/pages/youth/MyApplicationsPage';
 import MyRegistrationsPage from '@/pages/youth/MyRegistrationsPage';
 import ProfilePage from '@/pages/youth/ProfilePage';
@@ -40,9 +41,10 @@ function App() {
 
 			{/* Youth routes */}
 			<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
-				<Route path="/my-applications" element={<MyApplicationsPage />} />
-				<Route path="/my-registrations" element={<MyRegistrationsPage />} />
-				<Route path="/profile" element={<ProfilePage />} />
+				<Route path="/youth/profile" element={<ProfilePage />} />
+				<Route path="/youth/programs" element={<YouthProgramsPage />} />
+				<Route path="/youth/my-applications" element={<MyApplicationsPage />} />
+				<Route path="/youth/my-registrations" element={<MyRegistrationsPage />} />
 			</Route>
 
 			{/* Staff routes */}

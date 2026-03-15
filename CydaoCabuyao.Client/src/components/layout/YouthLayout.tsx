@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
-import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight } from 'lucide-react';
+import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight, BookOpen } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
-	{ to: '/profile', label: 'Profile', icon: User, end: false },
-	{ to: '/my-applications', label: 'My Applications', icon: FileText, end: false },
-	{ to: '/my-registrations', label: 'My Registrations', icon: CalendarCheck, end: false },
+	{ to: '/youth/profile', label: 'Profile', icon: User, end: false },
+	{ to: '/youth/programs', label: 'Programs', icon: BookOpen, end: false },
+	{ to: '/youth/my-applications', label: 'My Applications', icon: FileText, end: false },
+	{ to: '/youth/my-registrations', label: 'My Registrations', icon: CalendarCheck, end: false },
 ];
 
 interface YouthLayoutProps {
@@ -23,8 +24,7 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 	const { user, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const isMyApplications = location.pathname === '/my-applications';
-	const isMyRegistrations = location.pathname === '/my-registrations';
+	const isMyRegistrations = location.pathname === '/youth/my-registrations';
 
 	function handleLogout() {
 		clearAuth();
@@ -135,14 +135,6 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 						{description && <p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5">{description}</p>}
 					</div>
 
-					{isMyApplications && (
-						<Link
-							to="/programs"
-							className="shrink-0 bg-[#d42b2b] text-white text-[11px] font-bold tracking-[2px] uppercase font-['Instrument_Sans'] px-4 py-2 hover:bg-[#b82424] transition-colors"
-						>
-							Apply for Programs
-						</Link>
-					)}
 					{isMyRegistrations && (
 						<Link
 							to="/events"
