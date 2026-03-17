@@ -12,3 +12,10 @@ appsettings.Development.json
 
 # Claude
 .claude/
+
+# Visual Studio local files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
