@@ -1,131 +1,58 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using CydaoCabuyao.Server.DTOs;
 using CydaoCabuyao.Server.Models;
+using CydaoCabuyao.Server.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace CydaoCabuyao.Server.Controllers
+namespace CydaoCabuyao.Server.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class EventsController(IEventService eventService) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EventsController : ControllerBase
-    {
-        private readonly AppDbContext _context;
+  [HttpGet]
+  public async Task<ActionResult<IEnumerable<CydaoEvent>>> GetAll()
+  {
+    var events = await eventService.GetAllAsync();
+    return Ok(events);
+  }
 
-        public EventsController (AppDbContext context)
-        {
-            _context = context;
-        }
+  [HttpGet("{id}")]
+  public async Task<ActionResult<CydaoEvent>> GetById(int id)
+  {
+    var cydaoEvent = await eventService.GetByIdAsync(id);
 
-        // GET /api/events
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<CydaoEvent>>> GetEvents()
-        {
-            var cydaoEvents = await _context.Events.OrderByDescending(e => e.StartDate).ToListAsync();
-            return Ok(cydaoEvents);
-        }
+    if (cydaoEvent is null)
+      return NotFound(new { message = "Event not found." });
 
-        // Get /api/events/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CydaoEvent>> GetEvent(int id)
-        {
-            var cydaoEvent = await _context.Events.FindAsync(id);
-            if (cydaoEvent == null)
-            {
-                return NotFound(new {message = "Event not found."});
-            }
+    return Ok(cydaoEvent);
+  }
 
-            return Ok(cydaoEvent);
-        }
+  [HttpPost]
+  public async Task<ActionResult<CydaoEvent>> Create([FromBody] CreateEventDto dto)
+  {
+    var cydaoEvent = await eventService.CreateAsync(dto);
+    return CreatedAtAction(nameof(GetById), new { id = cydaoEvent.Id }, cydaoEvent);
+  }
 
-        // POST: api/events
-        [HttpPost]
-        public async Task<ActionResult<CydaoEvent>> CreateEvent([FromBody] CreateEventDto dto)
-        {
-            var cydaoEvent = new CydaoEvent
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                Venue = dto.Venue,
-                AvailableSlots = dto.AvailableSlots,
-                IsOpen = dto.IsOpen,
-                CreatedAt = DateTime.UtcNow
-            };
+  [HttpPut("{id}")]
+  public async Task<IActionResult> Update(int id, [FromBody] CreateEventDto dto)
+  {
+    var found = await eventService.UpdateAsync(id, dto);
 
-            _context.Events.Add(cydaoEvent);
-            await _context.SaveChangesAsync();
+    if (!found)
+      return NotFound(new { message = "Event not found." });
 
-            return CreatedAtAction(nameof(GetEvent), new { id = cydaoEvent.Id }, cydaoEvent);
-        }
+    return NoContent();
+  }
 
-        // PUT: api/events/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventDto dto)
-        {
-            var existingEvent = await _context.Events.FindAsync(id);
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> Delete(int id)
+  {
+    var found = await eventService.DeleteAsync(id);
 
-            if (existingEvent == null)
-            {
-                return NotFound(new { message = "Event not found." });
-            }
+    if (!found)
+      return NotFound(new { message = "Event not found." });
 
-            existingEvent.Title = dto.Title;
-            existingEvent.Description = dto.Description;
-            existingEvent.StartDate = dto.StartDate;
-            existingEvent.EndDate = dto.EndDate;
-            existingEvent.Venue = dto.Venue;
-            existingEvent.AvailableSlots = dto.AvailableSlots;
-            existingEvent.IsOpen = dto.IsOpen;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EventExists(id))
-                {
-                    return NotFound(new { message = "Event not found." });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/events/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEvent(int id)
-        {
-            var cydaoEvent = await _context.Events.FindAsync(id);
-            if (cydaoEvent == null)
-            {
-                return NotFound(new { message = "Event not found." });
-            }
-
-            _context.Events.Remove(cydaoEvent);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool EventExists(int id)
-        {
-            return _context.Events.Any(e => e.Id == id);
-        }
-    }
-
-     public class CreateEventDto
-        {
-            public string Title {get; set;} = string.Empty;
-            public string Description { get; set; } = string.Empty;
-            public DateTime StartDate { get; set; }
-            public DateTime EndDate { get; set; }
-            public string Venue { get; set; } = string.Empty;
-            public int AvailableSlots { get; set; }
-            public bool IsOpen { get; set; }
-        }
+    return NoContent();
+  }
 }

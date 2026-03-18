@@ -1,87 +1,54 @@
-using CydaoCabuyao.Server.Models;
+using CydaoCabuyao.Server.DTOs;
+using CydaoCabuyao.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CydaoCabuyao.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ApplicationsController : ControllerBase
+public class ApplicationsController(IApplicationService applicationService) : ControllerBase
 {
-    private readonly AppDbContext _db;
+  [HttpGet]
+  public async Task<IActionResult> GetAll()
+  {
+    var applications = await applicationService.GetAllAsync();
+    return Ok(applications);
+  }
 
-    public ApplicationsController(AppDbContext db)
+  [HttpGet("user/{userId}")]
+  public async Task<IActionResult> GetByUser(int userId)
+  {
+    var applications = await applicationService.GetByUserAsync(userId);
+
+    if (applications is null)
+      return NotFound(new { message = "User not found." });
+
+    return Ok(applications);
+  }
+
+  [HttpPost]
+  public async Task<IActionResult> Create([FromBody] CreateApplicationDto dto)
+  {
+    var (success, error, statusCode, application) = await applicationService.CreateAsync(dto);
+
+    if (!success)
     {
-        _db = db;
+      return statusCode == 409
+          ? Conflict(new { message = error })
+          : BadRequest(new { message = error });
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Application>>> GetAll()
-    {
-        var applications = await _db.Applications
-            .Include(a => a.User)
-            .Include(a => a.Program)
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
+    return CreatedAtAction(nameof(GetAll), new { id = application!.Id }, application);
+  }
 
-        return Ok(applications);
-    }
+  [HttpPut("{id}/status")]
+  public async Task<IActionResult> UpdateStatus(int id, [FromBody] ApplicationStatusUpdateDto dto)
+  {
+    var found = await applicationService.UpdateStatusAsync(id, dto);
 
-    [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<Application>>> GetByUser(int userId)
-    {
-        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+    if (!found)
+      return NotFound(new { message = "Application not found." });
 
-        if (!userExists)
-            return NotFound();
-
-        var applications = await _db.Applications
-            .Where(a => a.UserId == userId)
-            .Include(a => a.Program)
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
-
-        return Ok(applications);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Application>> Create(Application application)
-    {
-        var programExists = await _db.Programs.AnyAsync(p => p.Id == application.ProgramId);
-        if (!programExists)
-            return BadRequest("Program not found.");
-
-        var userExists = await _db.Users.AnyAsync(u => u.Id == application.UserId);
-        if (!userExists)
-            return BadRequest("User not found.");
-
-        var duplicate = await _db.Applications.AnyAsync(a =>
-            a.UserId == application.UserId && a.ProgramId == application.ProgramId);
-        if (duplicate)
-            return Conflict("User has already applied to this program.");
-
-        application.Status = ApplicationStatus.Pending;
-        application.CreatedAt = DateTime.UtcNow;
-
-        _db.Applications.Add(application);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAll), new { id = application.Id }, application);
-    }
-
-    [HttpPut("{id}/status")]
-    public async Task<IActionResult> UpdateStatus(int id, [FromBody] ApplicationStatusUpdate dto)
-    {
-        var application = await _db.Applications.FindAsync(id);
-
-        if (application is null)
-            return NotFound();
-
-        application.Status = dto.Status;
-        await _db.SaveChangesAsync();
-
-        return NoContent();
-    }
+    return NoContent();
+  }
 }
-
-public record ApplicationStatusUpdate(ApplicationStatus Status);
