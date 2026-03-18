@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { BARANGAY_LABELS } from '@/types';
-import type { AuthResponse, RegisterDto } from '@/types';
+import type { RegisterDto } from '@/types';
 
 const registerSchema = z
 	.object({
@@ -41,7 +41,7 @@ const barangayOptions = Object.entries(BARANGAY_LABELS).map(([value, label]) => 
 
 export default function RegisterPage() {
 	const navigate = useNavigate();
-	const { user, setAuth } = useAuthStore();
+	const { token } = useAuthStore();
 	const [serverError, setServerError] = useState<string | null>(null);
 
 	const {
@@ -52,8 +52,8 @@ export default function RegisterPage() {
 		resolver: zodResolver(registerSchema),
 	});
 
-	if (user) {
-		return <Navigate to="/dashboard" replace />;
+	if (token) {
+		return <Navigate to="/youth/profile" replace />;
 	}
 
 	async function onSubmit(data: RegisterFormData) {
@@ -61,9 +61,8 @@ export default function RegisterPage() {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { confirmPassword: _confirm, ...registerData } = data;
 		try {
-			const res = await api.post<AuthResponse>('/auth/register', registerData as RegisterDto);
-			setAuth(res.data.user, res.data.token);
-			navigate('/dashboard');
+			await api.post('/users', registerData as RegisterDto);
+			navigate('/login');
 		} catch (err: unknown) {
 			const message =
 				err instanceof Error && 'response' in err

@@ -1,19 +1,18 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { UserRole } from '@/types';
 
 interface ProtectedRouteProps {
-	allowedRole: UserRole;
+	allowedRole: 'Youth' | 'Staff';
 }
 
 export function ProtectedRoute({ allowedRole }: ProtectedRouteProps) {
-	const { user, token } = useAuthStore();
+	const { token, role } = useAuthStore();
 
-	if (!token || !user) {
+	if (!token || !role) {
 		return <Navigate to="/login" replace />;
 	}
 
-	if (user.role !== allowedRole) {
+	if (role !== allowedRole) {
 		return <Navigate to="/" replace />;
 	}
 

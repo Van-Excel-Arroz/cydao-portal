@@ -22,39 +22,37 @@ import ManageProgramsPage from '@/pages/staff/ManageProgramsPage';
 import ManageEventsPage from '@/pages/staff/ManageEventsPage';
 import ManageAnnouncementsPage from '@/pages/staff/ManageAnnouncementsPage';
 
-import { UserRole } from '@/types';
-
 function App() {
 	return (
 		<>
 			<ScrollToTop />
 			<Routes>
-			{/* Public routes — wrapped with Navbar and Footer */}
-			<Route element={<PublicLayout />}>
-				<Route path="/" element={<LandingPage />} />
-				<Route path="/programs" element={<ProgramsPage />} />
-				<Route path="/events" element={<EventsPage />} />
-				<Route path="/announcements" element={<AnnouncementsPage />} />
-				<Route path="/about" element={<AboutPage />} />
-				<Route path="/login" element={<LoginPage />} />
-				<Route path="/register" element={<RegisterPage />} />
-			</Route>
+				{/* Public routes — wrapped with Navbar and Footer */}
+				<Route element={<PublicLayout />}>
+					<Route path="/" element={<LandingPage />} />
+					<Route path="/programs" element={<ProgramsPage />} />
+					<Route path="/events" element={<EventsPage />} />
+					<Route path="/announcements" element={<AnnouncementsPage />} />
+					<Route path="/about" element={<AboutPage />} />
+					<Route path="/login" element={<LoginPage />} />
+					<Route path="/register" element={<RegisterPage />} />
+				</Route>
 
-			{/* Youth routes */}
-			<Route element={<ProtectedRoute allowedRole={UserRole.Youth} />}>
-				<Route path="/youth/profile" element={<ProfilePage />} />
-				<Route path="/youth/programs" element={<YouthProgramsPage />} />
-				<Route path="/youth/events" element={<YouthEventsPage />} />
-				<Route path="/youth/my-applications" element={<MyApplicationsPage />} />
-				<Route path="/youth/my-registrations" element={<MyRegistrationsPage />} />
-			</Route>
+				{/* Youth routes */}
+				<Route element={<ProtectedRoute allowedRole="Youth" />}>
+					<Route path="/youth/profile" element={<ProfilePage />} />
+					<Route path="/youth/programs" element={<YouthProgramsPage />} />
+					<Route path="/youth/events" element={<YouthEventsPage />} />
+					<Route path="/youth/my-applications" element={<MyApplicationsPage />} />
+					<Route path="/youth/my-registrations" element={<MyRegistrationsPage />} />
+				</Route>
 
-			{/* Staff routes */}
-			<Route element={<ProtectedRoute allowedRole={UserRole.Staff} />}>
-				<Route path="/admin/programs" element={<ManageProgramsPage />} />
-				<Route path="/admin/events" element={<ManageEventsPage />} />
-				<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
-			</Route>
+				{/* Staff routes */}
+				<Route element={<ProtectedRoute allowedRole="Staff" />}>
+					<Route path="/admin/programs" element={<ManageProgramsPage />} />
+					<Route path="/admin/events" element={<ManageEventsPage />} />
+					<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
+				</Route>
 			</Routes>
 		</>
 	);
