@@ -95,7 +95,7 @@ export default function RegisterPage() {
 			<div className="max-w-4xl mx-auto px-6 py-16">
 				<p className="font-['Instrument_Sans'] text-sm text-[#aaaaaa]">
 					Already have an account?{' '}
-					<Link to="/login" className="text-[#d42b2b] font-semibold hover:underline">
+					<Link to="/login" className="text-[#d42b2b] font-semibold hover:underline ml-2">
 						Sign in here
 					</Link>
 				</p>

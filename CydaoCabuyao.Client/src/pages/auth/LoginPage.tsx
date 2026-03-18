@@ -55,7 +55,7 @@ export default function LoginPage() {
 					Member Portal
 				</div>
 				<div>
-					<h1 className="font-['Syne'] font-black text-6xl leading-[1.05] tracking-tight">
+					<h1 className="font-['Syne'] font-black text-4xl leading-[1.05] tracking-tight">
 						Empowering
 						<br />
 						Cabuyao's
@@ -78,8 +78,8 @@ export default function LoginPage() {
 					<p className="eyebrow text-[#aaaaaa]">Sign In</p>
 					<h2 className="mt-5 font-['Syne'] font-bold text-4xl text-[#0d0d0d] leading-tight">Welcome back.</h2>
 					<p className="mt-3 text-sm text-[#aaaaaa] font-['Instrument_Sans']">
-						Don't have an account?{' '}
-						<Link to="/register" className="text-[#d42b2b] font-semibold hover:underline">
+						Don't have an account?
+						<Link to="/register" className="text-[#d42b2b] font-semibold hover:underline ml-2">
 							Register here
 						</Link>
 					</p>

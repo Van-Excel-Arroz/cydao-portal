@@ -41,13 +41,14 @@ export default function AboutPage() {
 				<div className="relative max-w-7xl mx-auto px-6">
 					<p className="eyebrow text-[#555] mb-6">Who We Are</p>
 					<h1 className="font-['Syne'] font-extrabold text-[clamp(2.5rem,6vw,5rem)] leading-[0.95] text-white max-w-2xl">
-						BAGONG<br />
-						CABUYAO<br />
+						BAGONG
+						<br />
+						CABUYAO
+						<br />
 						<span className="text-[#d42b2b]">CYDAO</span>
 					</h1>
 					<p className="mt-6 text-[#aaa] font-['Instrument_Sans'] text-base max-w-lg leading-relaxed">
-						City Youth Development Affairs Office — serving the youth of Cabuyao, Laguna
-						across all 18 barangays.
+						City Youth Development Affairs Office — serving the youth of Cabuyao, Laguna across all 18 barangays.
 					</p>
 				</div>
 			</section>
@@ -63,9 +64,9 @@ export default function AboutPage() {
 								<p className="font-['Syne'] font-extrabold text-2xl text-[#0d0d0d]">Mission</p>
 							</div>
 							<p className="font-['Instrument_Sans'] text-base text-[#555] leading-relaxed">
-								To develop a Bagong Cabuyao where youth actively participate in the
-								sustainable developmental policies and programs and ensure that young
-								people are <span className="font-semibold text-[#0d0d0d]">heard and valued</span>.
+								To develop a Bagong Cabuyao where youth actively participate in the sustainable developmental policies
+								and programs and ensure that young people are{' '}
+								<span className="font-semibold text-[#0d0d0d]">heard and valued</span>.
 							</p>
 						</div>
 
@@ -76,11 +77,8 @@ export default function AboutPage() {
 								<p className="font-['Syne'] font-extrabold text-2xl text-[#0d0d0d]">Vision</p>
 							</div>
 							<p className="font-['Instrument_Sans'] text-base text-[#555] leading-relaxed">
-								Cabuyao Youth Development Affairs Office envisions a future Bagong Cabuyao
-								in which young people are valued as{' '}
-								<span className="font-semibold text-[#0d0d0d]">
-									empowered leaders, skilled local youth
-								</span>{' '}
+								Cabuyao Youth Development Affairs Office envisions a future Bagong Cabuyao in which young people are
+								valued as <span className="font-semibold text-[#0d0d0d]">empowered leaders, skilled local youth</span>{' '}
 								and designers of communities that are built for all youth to thrive.
 							</p>
 						</div>
@@ -98,23 +96,16 @@ export default function AboutPage() {
 
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#e0e0e0]">
 						{coreValues.map((item, idx) => (
-							<div
-								key={item.key}
-								className="bg-white p-8 flex flex-col gap-3"
-							>
+							<div key={item.key} className="bg-white p-8 flex flex-col gap-3">
 								<div className="flex items-center gap-3">
-									<span className="font-['Syne'] font-extrabold text-[11px] text-[#e0e0e0]">
+									<span className="font-['Syne'] font-extrabold text-[13px] text-[#bbb]">
 										{String(idx + 1).padStart(2, '0')}
 									</span>
 									<div className="h-px flex-1 bg-[#f0f0f0]" />
 								</div>
-								<h3 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] tracking-wide">
-									{item.key}
-								</h3>
+								<h3 className="font-['Syne'] font-bold text-lg text-[#0d0d0d] tracking-wide">{item.key}</h3>
 								<div className="w-8 h-0.5 bg-[#d42b2b]" />
-								<p className="font-['Instrument_Sans'] text-sm text-[#555] leading-relaxed">
-									{item.body}
-								</p>
+								<p className="font-['Instrument_Sans'] text-sm text-[#555] leading-relaxed">{item.body}</p>
 							</div>
 						))}
 
@@ -133,7 +124,7 @@ export default function AboutPage() {
 
 			{/* Image strip */}
 			<section className="grid grid-cols-2 lg:grid-cols-4 h-52">
-				{[1, 2, 3, 4].map((n) => (
+				{[1, 2, 3, 4].map(n => (
 					<div key={n} className="overflow-hidden">
 						<img
 							src={`https://picsum.photos/seed/about${n}/400/210`}

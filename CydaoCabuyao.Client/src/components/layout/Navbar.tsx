@@ -1,11 +1,10 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { UserRole } from '@/types';
 import { LogOut, User } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 
 export function Navbar() {
-	const { user, clearAuth } = useAuthStore();
+	const { token, fullName, isStaff, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
 
 	function handleLogout() {
@@ -19,9 +18,7 @@ export function Navbar() {
 				{/* Logo */}
 				<Link to="/" className="flex items-center gap-3">
 					<img src={logo} alt="CYDAO Cabuyao" className="h-10 w-auto" />
-					<span className="font-['Syne'] font-bold text-sm tracking-wide text-[#0d0d0d]">
-						CYDAO Portal
-					</span>
+					<span className="font-['Syne'] font-bold text-sm tracking-wide text-[#0d0d0d]">CYDAO Portal</span>
 				</Link>
 
 				{/* Nav links */}
@@ -37,9 +34,7 @@ export function Navbar() {
 							to={to}
 							className={({ isActive }) =>
 								`text-sm font-medium font-['Instrument_Sans'] transition-colors ${
-									isActive
-										? 'text-[#d42b2b]'
-										: 'text-[#0d0d0d] hover:text-[#d42b2b]'
+									isActive ? 'text-[#d42b2b]' : 'text-[#0d0d0d] hover:text-[#d42b2b]'
 								}`
 							}
 						>
@@ -50,18 +45,18 @@ export function Navbar() {
 
 				{/* Auth area */}
 				<div className="flex items-center gap-3">
-					{user ? (
+					{token ? (
 						<>
 							<Link
-								to={user.role === UserRole.Staff ? '/admin/programs' : '/youth/profile'}
-								className="flex items-center gap-2 text-sm font-medium text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
+								to={isStaff() ? '/admin/programs' : '/youth/profile'}
+								className="flex items-center gap-2 text-sm font-medium font-['Instrument_Sans'] text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
 							>
 								<User size={16} />
-								{user.firstName}
+								{fullName}
 							</Link>
 							<button
 								onClick={handleLogout}
-								className="flex items-center gap-1.5 text-sm font-medium text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
+								className="flex items-center gap-1.5 text-sm font-medium font-['Instrument_Sans'] text-[#0d0d0d] hover:text-[#d42b2b] transition-colors"
 							>
 								<LogOut size={15} />
 								Logout
@@ -71,13 +66,13 @@ export function Navbar() {
 						<>
 							<Link
 								to="/login"
-								className="text-sm font-medium text-[#0d0d0d] border border-[#0d0d0d] px-4 py-1.5 hover:bg-[#0d0d0d] hover:text-white transition-colors"
+								className="text-sm font-medium font-['Instrument_Sans'] text-[#0d0d0d] border border-[#0d0d0d] px-4 py-1.5 hover:bg-[#0d0d0d] hover:text-white transition-colors"
 							>
 								Login
 							</Link>
 							<Link
 								to="/register"
-								className="text-sm font-medium text-white bg-[#d42b2b] px-4 py-1.5 hover:bg-[#b82424] transition-colors"
+								className="text-sm font-medium font-['Instrument_Sans'] text-white bg-[#d42b2b] px-4 py-1.5 hover:bg-[#b82424] transition-colors"
 							>
 								Join Now
 							</Link>

@@ -209,7 +209,7 @@ export default function EventsPage() {
 							<div key={month}>
 								{/* Month header */}
 								<div className="flex items-center gap-6 mb-8">
-									<h2 className="font-['Syne'] font-extrabold text-4xl text-[#f0f0f0] shrink-0">{month}</h2>
+									<h2 className="font-['Syne'] font-extrabold text-4xl text-[#e0e0e0] shrink-0">{month}</h2>
 									<div className="h-px flex-1 bg-[#e0e0e0]" />
 									<span className="text-xs text-[#aaa] font-['Instrument_Sans'] shrink-0">
 										{events.length} event{events.length !== 1 ? 's' : ''}

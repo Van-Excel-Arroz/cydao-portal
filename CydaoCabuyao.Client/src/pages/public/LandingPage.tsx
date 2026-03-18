@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Calendar, Users } from 'lucide-react';
 import { PROGRAM_CATEGORY_LABELS, ProgramCategory, AnnouncementCategory } from '@/types';
+import { OpenBadge, AnnouncementBadge } from '@/components/shared/Badge';
 
 // --- Mock data (replace with API calls once backend controllers exist) ---
 
@@ -74,19 +75,6 @@ const mockAnnouncements = [
 	},
 ];
 
-const categoryColors: Record<AnnouncementCategory, string> = {
-	[AnnouncementCategory.New]: 'bg-[#d42b2b] text-white',
-	[AnnouncementCategory.Event]: 'bg-[#0d0d0d] text-white',
-	[AnnouncementCategory.YORP]: 'bg-[#f5f5f5] text-[#0d0d0d]',
-	[AnnouncementCategory.Update]: 'bg-[#f5f5f5] text-[#0d0d0d]',
-};
-
-const categoryLabels: Record<AnnouncementCategory, string> = {
-	[AnnouncementCategory.New]: 'New',
-	[AnnouncementCategory.Event]: 'Event',
-	[AnnouncementCategory.YORP]: 'YORP',
-	[AnnouncementCategory.Update]: 'Update',
-};
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -179,23 +167,6 @@ function HeroSection() {
 									</p>
 								</div>
 							))}
-						</div>
-					</div>
-
-					{/* Right: photo card floating in the red panel */}
-					<div className="hidden lg:flex items-center justify-end pr-12 relative">
-						<div className="relative">
-							<div className="absolute -top-3 -right-3 w-full h-full border border-white/30" />
-							<img
-								src="https://picsum.photos/seed/cydao-portrait/360/480"
-								alt="CYDAO youth program"
-								className="w-64 h-80 object-cover relative z-10"
-							/>
-							<div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-								<p className="text-[9px] uppercase tracking-[3px] text-white/70 font-bold font-['Instrument_Sans']">
-									Cabuyao, Laguna
-								</p>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -352,13 +323,9 @@ function EventsSection() {
 							{/* Content */}
 							<div className="p-5 flex flex-col flex-1">
 								{/* Status badge */}
-								<span
-									className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 w-fit mb-3 ${
-										event.isOpen ? 'bg-[#d42b2b] text-white' : 'bg-[#f5f5f5] text-[#aaa]'
-									}`}
-								>
-									{event.isOpen ? 'Open' : 'Closed'}
-								</span>
+								<div className="mb-3">
+									<OpenBadge isOpen={event.isOpen} />
+								</div>
 
 								<p className="font-['Syne'] font-bold text-sm text-[#0d0d0d] leading-snug mb-3 flex-1">{event.title}</p>
 
@@ -424,11 +391,7 @@ function AnnouncementsSection() {
 					</div>
 					<div className="p-8 flex flex-col justify-center">
 						<div className="flex items-center gap-2 mb-4">
-							<span
-								className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 ${categoryColors[featured.category]}`}
-							>
-								{categoryLabels[featured.category]}
-							</span>
+							<AnnouncementBadge category={featured.category} />
 							<span className="text-[10px] text-[#aaa] font-['Instrument_Sans']">{formatDate(featured.createdAt)}</span>
 						</div>
 						<h3 className="font-['Syne'] font-bold text-2xl text-[#0d0d0d] mb-3 leading-snug">{featured.title}</h3>
@@ -455,11 +418,7 @@ function AnnouncementsSection() {
 							</div>
 							<div className="p-5">
 								<div className="flex items-center gap-2 mb-2">
-									<span
-										className={`text-[9px] font-bold uppercase tracking-[2px] px-2 py-0.5 ${categoryColors[ann.category]}`}
-									>
-										{categoryLabels[ann.category]}
-									</span>
+									<AnnouncementBadge category={ann.category} />
 									<span className="text-[10px] text-[#aaa] font-['Instrument_Sans']">{formatDate(ann.createdAt)}</span>
 								</div>
 								<h3 className="font-['Syne'] font-bold text-sm text-[#0d0d0d] mb-2 leading-snug">{ann.title}</h3>
