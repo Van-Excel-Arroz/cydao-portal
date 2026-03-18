@@ -1,13 +1,17 @@
+using System.Security.Claims;
 using CydaoCabuyao.Server.DTOs;
 using CydaoCabuyao.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CydaoCabuyao.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ApplicationsController(IApplicationService applicationService) : ControllerBase
 {
+  [Authorize(Roles = "Staff")]
   [HttpGet]
   public async Task<IActionResult> GetAll()
   {
@@ -15,9 +19,10 @@ public class ApplicationsController(IApplicationService applicationService) : Co
     return Ok(applications);
   }
 
-  [HttpGet("user/{userId}")]
-  public async Task<IActionResult> GetByUser(int userId)
+  [HttpGet("user")]
+  public async Task<IActionResult> GetByUser()
   {
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     var applications = await applicationService.GetByUserAsync(userId);
 
     if (applications is null)
@@ -29,7 +34,8 @@ public class ApplicationsController(IApplicationService applicationService) : Co
   [HttpPost]
   public async Task<IActionResult> Create([FromBody] CreateApplicationDto dto)
   {
-    var (success, error, statusCode, application) = await applicationService.CreateAsync(dto);
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var (success, error, statusCode, application) = await applicationService.CreateAsync(dto, userId);
 
     if (!success)
     {
@@ -41,6 +47,7 @@ public class ApplicationsController(IApplicationService applicationService) : Co
     return CreatedAtAction(nameof(GetAll), new { id = application!.Id }, application);
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpPut("{id}/status")]
   public async Task<IActionResult> UpdateStatus(int id, [FromBody] ApplicationStatusUpdateDto dto)
   {

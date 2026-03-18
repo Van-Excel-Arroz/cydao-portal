@@ -1,5 +1,6 @@
 using CydaoCabuyao.Server.DTOs;
 using CydaoCabuyao.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CydaoCabuyao.Server.Controllers;
@@ -8,6 +9,7 @@ namespace CydaoCabuyao.Server.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService) : ControllerBase
 {
+  [Authorize(Roles = "Staff")]
   [HttpGet]
   public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAll()
   {
@@ -15,6 +17,7 @@ public class UsersController(IUserService userService) : ControllerBase
     return Ok(users);
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpGet("{id}")]
   public async Task<ActionResult<UserResponseDto>> GetById(int id)
   {
@@ -37,6 +40,7 @@ public class UsersController(IUserService userService) : ControllerBase
     return CreatedAtAction(nameof(GetById), new { id = data!.Id }, data);
   }
 
+  [Authorize]
   [HttpPut("{id}")]
   public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
   {
@@ -48,6 +52,7 @@ public class UsersController(IUserService userService) : ControllerBase
     return NoContent();
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(int id)
   {

@@ -8,7 +8,7 @@ public interface IApplicationService
 {
   Task<List<Application>> GetAllAsync();
   Task<List<Application>?> GetByUserAsync(int userId);
-  Task<(bool Success, string? Error, int StatusCode, Application? Data)> CreateAsync(CreateApplicationDto dto);
+  Task<(bool Success, string? Error, int StatusCode, Application? Data)> CreateAsync(CreateApplicationDto dto, int userId);
   Task<bool> UpdateStatusAsync(int id, ApplicationStatusUpdateDto dto);
 }
 
@@ -44,24 +44,20 @@ public class ApplicationService : IApplicationService
         .ToListAsync();
   }
 
-  public async Task<(bool Success, string? Error, int StatusCode, Application? Data)> CreateAsync(CreateApplicationDto dto)
+  public async Task<(bool Success, string? Error, int StatusCode, Application? Data)> CreateAsync(CreateApplicationDto dto, int userId)
   {
     var programExists = await _db.Programs.AnyAsync(p => p.Id == dto.ProgramId);
     if (!programExists)
       return (false, "Program not found.", 400, null);
 
-    var userExists = await _db.Users.AnyAsync(u => u.Id == dto.UserId);
-    if (!userExists)
-      return (false, "User not found.", 400, null);
-
     var duplicate = await _db.Applications
-        .AnyAsync(a => a.UserId == dto.UserId && a.ProgramId == dto.ProgramId);
+        .AnyAsync(a => a.UserId == userId && a.ProgramId == dto.ProgramId);
     if (duplicate)
       return (false, "User has already applied to this program.", 409, null);
 
     var application = new Application
     {
-      UserId = dto.UserId,
+      UserId = userId,
       ProgramId = dto.ProgramId,
       Status = ApplicationStatus.Pending,
       CreatedAt = DateTime.UtcNow

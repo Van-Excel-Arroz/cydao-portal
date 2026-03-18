@@ -1,6 +1,7 @@
 using CydaoCabuyao.Server.DTOs;
 using CydaoCabuyao.Server.Models;
 using CydaoCabuyao.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CydaoCabuyao.Server.Controllers;
@@ -27,6 +28,7 @@ public class EventsController(IEventService eventService) : ControllerBase
     return Ok(cydaoEvent);
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpPost]
   public async Task<ActionResult<CydaoEvent>> Create([FromBody] CreateEventDto dto)
   {
@@ -34,6 +36,7 @@ public class EventsController(IEventService eventService) : ControllerBase
     return CreatedAtAction(nameof(GetById), new { id = cydaoEvent.Id }, cydaoEvent);
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpPut("{id}")]
   public async Task<IActionResult> Update(int id, [FromBody] CreateEventDto dto)
   {
@@ -45,6 +48,7 @@ public class EventsController(IEventService eventService) : ControllerBase
     return NoContent();
   }
 
+  [Authorize(Roles = "Staff")]
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(int id)
   {

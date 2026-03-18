@@ -8,7 +8,7 @@ public interface IEventRegistrationService
 {
   Task<List<EventRegistrationEventDto>> GetByEventAsync(int eventId);
   Task<List<EventRegistrationUserDto>> GetByUserAsync(int userId);
-  Task<(bool Success, string? Error, int? RegistrationId)> CreateAsync(CreateEventRegistrationDto dto);
+  Task<(bool Success, string? Error, int? RegistrationId)> CreateAsync(CreateEventRegistrationDto dto, int userId);
   Task<bool> DeleteAsync(int id);
 }
 
@@ -58,7 +58,7 @@ public class EventRegistrationService : IEventRegistrationService
         .ToListAsync();
   }
 
-  public async Task<(bool Success, string? Error, int? RegistrationId)> CreateAsync(CreateEventRegistrationDto dto)
+  public async Task<(bool Success, string? Error, int? RegistrationId)> CreateAsync(CreateEventRegistrationDto dto, int userId)
   {
     var cydaoEvent = await _db.Events.FindAsync(dto.EventId);
 
@@ -69,14 +69,14 @@ public class EventRegistrationService : IEventRegistrationService
       return (false, "Event is closed.", null);
 
     var alreadyRegistered = await _db.EventRegistrations
-        .AnyAsync(r => r.UserId == dto.UserId && r.EventId == dto.EventId);
+        .AnyAsync(r => r.UserId == userId && r.EventId == dto.EventId);
 
     if (alreadyRegistered)
       return (false, "User is already registered for this event.", null);
 
     var registration = new EventRegistration
     {
-      UserId = dto.UserId,
+      UserId = userId,
       EventId = dto.EventId,
       CreatedAt = DateTime.UtcNow
     };
