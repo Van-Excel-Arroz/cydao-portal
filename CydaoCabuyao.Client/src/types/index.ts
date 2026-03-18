@@ -138,7 +138,6 @@ export interface Application {
 	user: User;
 	programId: number;
 	program: CydaoProgram;
-	motivation: string;
 	status: ApplicationStatus;
 	createdAt: string;
 }
@@ -178,7 +177,9 @@ export interface RegisterDto {
 
 export interface AuthResponse {
 	token: string;
-	user: User;
+	userId: number;
+	fullName: string;
+	role: string;
 }
 
 export interface CreateProgramDto {
@@ -205,7 +206,6 @@ export interface CreateAnnouncementDto {
 	category: AnnouncementCategory;
 }
 
-export interface ApplyToProgramDto {
+export interface CreateApplicationDto {
 	programId: number;
-	motivation: string;
 }

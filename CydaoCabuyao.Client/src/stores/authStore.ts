@@ -1,21 +1,33 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User } from '@/types';
+import type { AuthResponse } from '@/types';
 
 interface AuthStore {
-	user: User | null;
 	token: string | null;
-	setAuth: (user: User, token: string) => void;
+	userId: number | null;
+	fullName: string | null;
+	role: string | null;
+	setAuth: (response: AuthResponse) => void;
 	clearAuth: () => void;
+	isStaff: () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
 	persist(
-		(set) => ({
-			user: null,
+		(set, get) => ({
 			token: null,
-			setAuth: (user, token) => set({ user, token }),
-			clearAuth: () => set({ user: null, token: null }),
+			userId: null,
+			fullName: null,
+			role: null,
+			setAuth: (response) =>
+				set({
+					token: response.token,
+					userId: response.userId,
+					fullName: response.fullName,
+					role: response.role,
+				}),
+			clearAuth: () => set({ token: null, userId: null, fullName: null, role: null }),
+			isStaff: () => get().role === 'Staff',
 		}),
 		{
 			name: 'cydao-auth',
