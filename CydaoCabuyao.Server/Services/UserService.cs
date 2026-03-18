@@ -47,7 +47,7 @@ public class UserService : IUserService
       FirstName = dto.FirstName,
       LastName = dto.LastName,
       Email = dto.Email,
-      Password = dto.Password,
+      Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
       MobileNumber = dto.MobileNumber,
       DateOfBirth = dto.DateOfBirth,
       Barangay = dto.Barangay,
