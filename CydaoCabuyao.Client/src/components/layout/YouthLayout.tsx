@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight, BookOpen, CalendarDays } from 'lucide-react';
 import logo from '@/assets/images/logo.svg';
 import { useAuthStore } from '@/stores/authStore';
@@ -22,8 +22,15 @@ interface YouthLayoutProps {
 
 export function YouthLayout({ children, title, description, noScroll = false }: YouthLayoutProps) {
 	const [collapsed, setCollapsed] = useState(false);
-	const { user, clearAuth } = useAuthStore();
+	const { fullName, clearAuth } = useAuthStore();
 	const navigate = useNavigate();
+
+	const initials = fullName
+		?.split(' ')
+		.map(n => n[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase() ?? '?';
 
 	function handleLogout() {
 		clearAuth();
@@ -36,9 +43,10 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 			<aside
 				className={`shrink-0 bg-[#0d0d0d] flex flex-col transition-all duration-200 h-screen overflow-y-auto ${collapsed ? 'w-16' : 'w-60'}`}
 			>
-				{/* Logo */}
-				<div
-					className={`border-b border-white/10 flex items-center h-19 ${collapsed ? 'justify-center px-0' : 'px-5 gap-3'}`}
+				{/* Logo — links to public landing page */}
+				<Link
+					to="/"
+					className={`border-b border-white/10 flex items-center h-19 hover:bg-white/5 transition-colors ${collapsed ? 'justify-center px-0' : 'px-5 gap-3'}`}
 				>
 					<img src={logo} alt="CYDAO Cabuyao" className="h-12 shrink-0 rounded-full" />
 					{!collapsed && (
@@ -49,7 +57,7 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 							</p>
 						</div>
 					)}
-				</div>
+				</Link>
 
 				{/* Nav */}
 				<nav className="flex-1 p-2 flex flex-col gap-0.5 overflow-x-hidden overflow-y-auto">
@@ -76,14 +84,11 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 					<div className="border-t border-white/10 px-4 py-3">
 						<div className="flex items-center gap-2 mb-2">
 							<div className="w-7 h-7 rounded-full bg-[#d42b2b] flex items-center justify-center shrink-0">
-								<span className="text-[11px] font-bold text-white font-['Instrument_Sans']">
-									{user?.firstName?.[0]}
-									{user?.lastName?.[0]}
-								</span>
+								<span className="text-[11px] font-bold text-white font-['Instrument_Sans']">{initials}</span>
 							</div>
 							<div className="min-w-0">
 								<p className="text-xs font-semibold text-white font-['Instrument_Sans'] truncate leading-tight">
-									{user?.firstName} {user?.lastName}
+									{fullName}
 								</p>
 								<p className="text-[10px] text-white/40 font-['Instrument_Sans'] truncate">Member</p>
 							</div>
@@ -101,10 +106,7 @@ export function YouthLayout({ children, title, description, noScroll = false }: 
 				{collapsed && (
 					<div className="border-t border-white/10 p-2 flex flex-col gap-2 items-center">
 						<div className="w-7 h-7 rounded-full bg-[#d42b2b] flex items-center justify-center shrink-0">
-							<span className="text-[11px] font-bold text-white font-['Instrument_Sans']">
-								{user?.firstName?.[0]}
-								{user?.lastName?.[0]}
-							</span>
+							<span className="text-[11px] font-bold text-white font-['Instrument_Sans']">{initials}</span>
 						</div>
 						<button
 							onClick={handleLogout}

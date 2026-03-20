@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { ScrollToTop } from '@/components/shared/ScrollToTop';
@@ -40,6 +40,7 @@ function App() {
 
 				{/* Youth routes */}
 				<Route element={<ProtectedRoute allowedRole="Youth" />}>
+					<Route path="/youth" element={<Navigate to="/youth/profile" replace />} />
 					<Route path="/youth/profile" element={<ProfilePage />} />
 					<Route path="/youth/programs" element={<YouthProgramsPage />} />
 					<Route path="/youth/events" element={<YouthEventsPage />} />
@@ -49,6 +50,7 @@ function App() {
 
 				{/* Staff routes */}
 				<Route element={<ProtectedRoute allowedRole="Staff" />}>
+					<Route path="/admin" element={<Navigate to="/admin/programs" replace />} />
 					<Route path="/admin/programs" element={<ManageProgramsPage />} />
 					<Route path="/admin/events" element={<ManageEventsPage />} />
 					<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
