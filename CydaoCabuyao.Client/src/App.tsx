@@ -21,6 +21,7 @@ import ProfilePage from '@/pages/youth/ProfilePage';
 import ManageProgramsPage from '@/pages/staff/ManageProgramsPage';
 import ManageEventsPage from '@/pages/staff/ManageEventsPage';
 import ManageAnnouncementsPage from '@/pages/staff/ManageAnnouncementsPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 function App() {
 	return (
@@ -55,6 +56,9 @@ function App() {
 					<Route path="/admin/events" element={<ManageEventsPage />} />
 					<Route path="/admin/announcements" element={<ManageAnnouncementsPage />} />
 				</Route>
+
+			{/* 404 catch-all */}
+			<Route path="*" element={<NotFoundPage />} />
 			</Routes>
 		</>
 	);
