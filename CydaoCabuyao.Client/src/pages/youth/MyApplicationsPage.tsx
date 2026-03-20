@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { YouthLayout } from '@/components/layout/YouthLayout';
-import { ApplicationStatus, ProgramCategory } from '@/types';
-import { useApplicationsStore } from '@/stores/applicationsStore';
-import type { StoredApplication } from '@/stores/applicationsStore';
+import { ProgramCategory } from '@/types';
+import type { Application } from '@/types';
 import { CategoryBadge, StatusBadge } from '@/components/shared/Badge';
 import { Btn } from '@/components/shared/Btn';
 import { DataTable, tableRowClass } from '@/components/shared/DataTable';
 import { Modal, ModalCover, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
+import api from '@/lib/api';
 
 const categoryImage: Record<ProgramCategory, string> = {
 	[ProgramCategory.Leadership]: 'https://picsum.photos/seed/prog-leadership/800/300',
@@ -34,20 +35,15 @@ const COLS = [
 ] as const;
 
 export default function MyApplicationsPage() {
-	const { applications, cancelApplication } = useApplicationsStore();
-	const [selectedApp, setSelectedApp] = useState<StoredApplication | null>(null);
-	const [confirmCancel, setConfirmCancel] = useState(false);
+	const { data: applications = [], isLoading } = useQuery({
+		queryKey: ['my-applications'],
+		queryFn: () => api.get<Application[]>('/applications/user').then(r => r.data),
+	});
 
-	function handleCancel() {
-		if (!selectedApp) return;
-		cancelApplication(selectedApp.id);
-		setSelectedApp(null);
-		setConfirmCancel(false);
-	}
+	const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
 	function handleCloseModal() {
 		setSelectedApp(null);
-		setConfirmCancel(false);
 	}
 
 	return (
@@ -56,26 +52,26 @@ export default function MyApplicationsPage() {
 				<DataTable
 					columns={[...COLS]}
 					colsClass="grid-cols-[2fr_1fr_1fr_1fr]"
-					empty={applications.length === 0}
+					empty={!isLoading && applications.length === 0}
 					emptyMessage="You have not submitted any applications yet."
-					footer={`${applications.length} application${applications.length !== 1 ? 's' : ''}`}
+					footer={isLoading ? 'Loading...' : `${applications.length} application${applications.length !== 1 ? 's' : ''}`}
 				>
 					{applications.map((app, i) => (
 						<button
 							key={app.id}
-							onClick={() => { setSelectedApp(app); setConfirmCancel(false); }}
+							onClick={() => setSelectedApp(app)}
 							className={`w-full text-left grid grid-cols-[2fr_1fr_1fr_1fr] hover:bg-[#fafafa] transition-colors cursor-pointer ${tableRowClass(i)}`}
 						>
 							<div className="px-5 py-3.5">
 								<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-									{app.programTitle}
+									{app.program.title}
 								</p>
 							</div>
 							<div className="px-5 py-3.5 flex items-center justify-center">
-								<CategoryBadge category={app.programCategory} />
+								<CategoryBadge category={app.program.category} />
 							</div>
 							<div className="px-5 py-3.5 flex items-center justify-center">
-								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(app.submittedAt)}</p>
+								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(app.createdAt)}</p>
 							</div>
 							<div className="px-5 py-3.5 flex items-center justify-center">
 								<StatusBadge status={app.status} />
@@ -90,17 +86,17 @@ export default function MyApplicationsPage() {
 				{selectedApp && (
 					<>
 						<ModalCover
-							src={categoryImage[selectedApp.programCategory]}
-							alt={selectedApp.programTitle}
+							src={categoryImage[selectedApp.program.category]}
+							alt={selectedApp.program.title}
 							onClose={handleCloseModal}
 						>
-							<CategoryBadge category={selectedApp.programCategory} />
+							<CategoryBadge category={selectedApp.program.category} />
 							<StatusBadge status={selectedApp.status} />
 						</ModalCover>
 
-						<ModalHeader title={selectedApp.programTitle}>
+						<ModalHeader title={selectedApp.program.title}>
 							<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-1">
-								Submitted {formatDate(selectedApp.submittedAt)}
+								Submitted {formatDate(selectedApp.createdAt)}
 							</p>
 						</ModalHeader>
 
@@ -109,25 +105,12 @@ export default function MyApplicationsPage() {
 								About this Program
 							</p>
 							<p className="text-sm font-['Instrument_Sans'] text-[#0d0d0d] leading-relaxed">
-								{selectedApp.programDescription}
+								{selectedApp.program.description}
 							</p>
 						</ModalBody>
 
 						<ModalFooter>
-							<div>
-								{selectedApp.status === ApplicationStatus.Pending &&
-									(confirmCancel ? (
-										<div className="flex items-center gap-3">
-											<p className="text-xs text-[#0d0d0d] font-['Instrument_Sans']">Cancel this application?</p>
-											<Btn variant="danger" size="sm" onClick={handleCancel}>Yes, Cancel</Btn>
-											<Btn variant="ghost" size="sm" onClick={() => setConfirmCancel(false)}>No</Btn>
-										</div>
-									) : (
-										<Btn variant="danger-outline" size="sm" onClick={() => setConfirmCancel(true)}>
-											Cancel Application
-										</Btn>
-									))}
-							</div>
+							<div />
 							<Btn variant="ghost" onClick={handleCloseModal} className="px-4 py-2 text-sm">Close</Btn>
 						</ModalFooter>
 					</>

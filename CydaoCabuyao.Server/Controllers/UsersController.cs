@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CydaoCabuyao.Server.DTOs;
 using CydaoCabuyao.Server.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +10,19 @@ namespace CydaoCabuyao.Server.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService) : ControllerBase
 {
+  [Authorize]
+  [HttpGet("me")]
+  public async Task<ActionResult<UserResponseDto>> GetMe()
+  {
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var user = await userService.GetByIdAsync(userId);
+
+    if (user is null)
+      return NotFound(new { message = "User not found." });
+
+    return Ok(user);
+  }
+
   [Authorize(Roles = "Staff")]
   [HttpGet]
   public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAll()

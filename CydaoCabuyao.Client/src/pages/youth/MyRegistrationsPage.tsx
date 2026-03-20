@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Calendar, MapPin, Users } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { YouthLayout } from '@/components/layout/YouthLayout';
-import { useRegistrationsStore } from '@/stores/registrationsStore';
-import type { StoredRegistration } from '@/stores/registrationsStore';
+import type { EventRegistrationUserDto } from '@/types';
 import { Btn } from '@/components/shared/Btn';
 import { DataTable, tableRowClass } from '@/components/shared/DataTable';
 import { Modal, ModalCover, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
+import api from '@/lib/api';
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -33,16 +34,25 @@ const COLS = [
 ] as const;
 
 export default function MyRegistrationsPage() {
-	const { registrations, cancelRegistration } = useRegistrationsStore();
-	const [selectedReg, setSelectedReg] = useState<StoredRegistration | null>(null);
-	const [confirmCancel, setConfirmCancel] = useState(false);
+	const queryClient = useQueryClient();
 
-	function handleCancel() {
-		if (!selectedReg) return;
-		cancelRegistration(selectedReg.id);
-		setSelectedReg(null);
-		setConfirmCancel(false);
-	}
+	const { data: registrations = [], isLoading } = useQuery({
+		queryKey: ['my-registrations'],
+		queryFn: () => api.get<EventRegistrationUserDto[]>('/eventregistrations/user').then(r => r.data),
+	});
+
+	const cancelMutation = useMutation({
+		mutationFn: (id: number) => api.delete(`/eventregistrations/${id}`),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+			queryClient.invalidateQueries({ queryKey: ['events'] });
+			setSelectedReg(null);
+			setConfirmCancel(false);
+		},
+	});
+
+	const [selectedReg, setSelectedReg] = useState<EventRegistrationUserDto | null>(null);
+	const [confirmCancel, setConfirmCancel] = useState(false);
 
 	function handleCloseModal() {
 		setSelectedReg(null);
@@ -55,9 +65,9 @@ export default function MyRegistrationsPage() {
 				<DataTable
 					columns={[...COLS]}
 					colsClass="grid-cols-[2fr_1fr_1fr_1fr]"
-					empty={registrations.length === 0}
+					empty={!isLoading && registrations.length === 0}
 					emptyMessage="You have not registered for any events yet."
-					footer={`${registrations.length} registration${registrations.length !== 1 ? 's' : ''}`}
+					footer={isLoading ? 'Loading...' : `${registrations.length} registration${registrations.length !== 1 ? 's' : ''}`}
 				>
 					{registrations.map((reg, i) => (
 						<button
@@ -135,7 +145,14 @@ export default function MyRegistrationsPage() {
 								{confirmCancel ? (
 									<div className="flex items-center gap-3">
 										<p className="text-xs text-[#0d0d0d] font-['Instrument_Sans']">Cancel this registration?</p>
-										<Btn variant="danger" size="sm" onClick={handleCancel}>Yes, Cancel</Btn>
+										<Btn
+											variant="danger"
+											size="sm"
+											onClick={() => cancelMutation.mutate(selectedReg.id)}
+											disabled={cancelMutation.isPending}
+										>
+											{cancelMutation.isPending ? 'Cancelling...' : 'Yes, Cancel'}
+										</Btn>
 										<Btn variant="ghost" size="sm" onClick={() => setConfirmCancel(false)}>No</Btn>
 									</div>
 								) : (

@@ -1,104 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Calendar, MapPin, Users } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { YouthLayout } from '@/components/layout/YouthLayout';
-import { useRegistrationsStore } from '@/stores/registrationsStore';
+import type { CydaoEvent, EventRegistrationUserDto } from '@/types';
 import { OpenBadge, Badge } from '@/components/shared/Badge';
 import { Btn } from '@/components/shared/Btn';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Modal, ModalCover, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
-
-interface Event {
-	id: number;
-	title: string;
-	description: string;
-	startDate: string;
-	endDate: string;
-	venue: string;
-	availableSlots: number;
-	isOpen: boolean;
-}
-
-const mockEvents: Event[] = [
-	{
-		id: 1,
-		title: 'Kabataan Leadership Summit 2026',
-		description:
-			'A two-day summit gathering youth leaders from all 18 barangays to discuss governance, advocacy, and community action plans. Participants will work in barangay clusters to draft local youth development proposals, which will be presented to CYDAO staff and city officials on the final day.',
-		startDate: '2026-04-10',
-		endDate: '2026-04-12',
-		venue: 'Cabuyao City Hall Auditorium',
-		availableSlots: 80,
-		isOpen: true,
-	},
-	{
-		id: 2,
-		title: 'Environmental Awareness Day',
-		description:
-			'A barangay-wide cleanup drive and environmental education event held at Bigaa Community Park, in partnership with the DENR. Activities include waste segregation workshops, tree planting, and an eco-fair featuring sustainable products from local youth enterprises.',
-		startDate: '2026-04-22',
-		endDate: '2026-04-22',
-		venue: 'Bigaa Community Park',
-		availableSlots: 150,
-		isOpen: true,
-	},
-	{
-		id: 3,
-		title: 'YORP Orientation Seminar',
-		description:
-			'Mandatory orientation for all youth organizations seeking YORP accreditation in 2026. Bring your documentary requirements. Topics include YORP criteria, submission timelines, and the evaluation process. Representatives from all 18 barangays are expected to attend.',
-		startDate: '2026-04-28',
-		endDate: '2026-04-28',
-		venue: 'CYDAO Conference Room',
-		availableSlots: 40,
-		isOpen: true,
-	},
-	{
-		id: 4,
-		title: 'Youth Mental Health Forum',
-		description:
-			'A half-day forum featuring licensed psychologists discussing mental wellness, stress management, and seeking help resources for Cabuyao youth. Includes an open Q&A session and distribution of mental health resource kits sponsored by the Department of Health.',
-		startDate: '2026-05-03',
-		endDate: '2026-05-03',
-		venue: 'Cabuyao Public Library',
-		availableSlots: 60,
-		isOpen: false,
-	},
-	{
-		id: 5,
-		title: 'Livelihood Skills Training Fair',
-		description:
-			'A two-day fair featuring TESDA-accredited training booths, livelihood exhibits, and on-the-spot enrollment for free skills programs. Participants may visit all booths and receive certificates of attendance. Skills covered include cooking, welding, dressmaking, and basic electronics repair.',
-		startDate: '2026-05-17',
-		endDate: '2026-05-18',
-		venue: 'Cabuyao Sports Complex',
-		availableSlots: 200,
-		isOpen: true,
-	},
-	{
-		id: 6,
-		title: 'Kabataang Artista: Arts Festival',
-		description:
-			'An inter-barangay arts showcase featuring visual art, spoken word, dance, and live music performances celebrating Cabuyao youth talent. Registered participants may join as performers or volunteers. All performers must submit their entry form and materials to CYDAO at least two weeks before the event.',
-		startDate: '2026-05-24',
-		endDate: '2026-05-25',
-		venue: 'Cabuyao Town Plaza',
-		availableSlots: 500,
-		isOpen: true,
-	},
-	{
-		id: 7,
-		title: 'Youth Governance Workshop',
-		description:
-			'A one-day workshop on participatory governance, budget advocacy, and Sangguniang Kabataan processes for elected SK officials. Participants will receive a workshop kit and a certificate signed by the CYDAO Executive Director upon completion.',
-		startDate: '2026-06-12',
-		endDate: '2026-06-12',
-		venue: 'Cabuyao City Hall Session Hall',
-		availableSlots: 50,
-		isOpen: true,
-	},
-];
+import api from '@/lib/api';
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -127,13 +38,33 @@ const STATUS_OPTIONS = [
 export default function YouthEventsPage() {
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
-	const [selected, setSelected] = useState<Event | null>(null);
+	const [selected, setSelected] = useState<CydaoEvent | null>(null);
 
-	const { registrations, addRegistration } = useRegistrationsStore();
-	const registeredEventIds = new Set(registrations.map(r => r.eventId));
+	const queryClient = useQueryClient();
+
+	const { data: events = [], isLoading } = useQuery({
+		queryKey: ['events'],
+		queryFn: () => api.get<CydaoEvent[]>('/events').then(r => r.data),
+	});
+
+	const { data: myRegistrations = [] } = useQuery({
+		queryKey: ['my-registrations'],
+		queryFn: () => api.get<EventRegistrationUserDto[]>('/eventregistrations/user').then(r => r.data),
+	});
+
+	const registeredEventIds = new Set(myRegistrations.map(r => r.eventId));
+
+	const registerMutation = useMutation({
+		mutationFn: (eventId: number) => api.post('/eventregistrations', { eventId }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+			queryClient.invalidateQueries({ queryKey: ['events'] });
+			setSelected(null);
+		},
+	});
 
 	const filtered = useMemo(() => {
-		let list = [...mockEvents];
+		let list = [...events];
 		if (search.trim()) {
 			const q = search.toLowerCase();
 			list = list.filter(
@@ -147,20 +78,7 @@ export default function YouthEventsPage() {
 			list = list.filter(e => (status === 'open' ? e.isOpen : !e.isOpen));
 		}
 		return list;
-	}, [search, status]);
-
-	function handleRegister(event: Event) {
-		addRegistration({
-			eventId: event.id,
-			eventTitle: event.title,
-			eventDescription: event.description,
-			startDate: `${event.startDate}T08:00:00Z`,
-			endDate: `${event.endDate}T17:00:00Z`,
-			venue: event.venue,
-			availableSlots: event.availableSlots,
-		});
-		setSelected(null);
-	}
+	}, [events, search, status]);
 
 	return (
 		<YouthLayout title="Events">
@@ -180,7 +98,9 @@ export default function YouthEventsPage() {
 			</div>
 
 			{/* Events grid */}
-			{filtered.length === 0 ? (
+			{isLoading ? (
+				<EmptyState variant="page" title="Loading events..." subtitle="Please wait." />
+			) : filtered.length === 0 ? (
 				<EmptyState variant="page" title="No events found" subtitle="Try a different search or filter." />
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -281,8 +201,13 @@ export default function YouthEventsPage() {
 										Already Registered
 									</Badge>
 								) : selected.isOpen ? (
-									<Btn variant="primary" size="sm" onClick={() => handleRegister(selected)}>
-										Register Now
+									<Btn
+										variant="primary"
+										size="sm"
+										onClick={() => registerMutation.mutate(selected.id)}
+										disabled={registerMutation.isPending}
+									>
+										{registerMutation.isPending ? 'Registering...' : 'Register Now'}
 									</Btn>
 								) : (
 									<span className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">

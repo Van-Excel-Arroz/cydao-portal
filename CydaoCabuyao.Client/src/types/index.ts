@@ -221,3 +221,16 @@ export interface EventRegistrationEventDto {
 export interface ApplicationStatusUpdateDto {
 	status: ApplicationStatus;
 }
+
+export interface EventRegistrationUserDto {
+	id: number;
+	eventId: number;
+	eventTitle: string;
+	eventDescription: string;
+	startDate: string;
+	endDate: string;
+	venue: string;
+	availableSlots: number;
+	isOpen: boolean;
+	registeredAt: string;
+}

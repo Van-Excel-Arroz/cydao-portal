@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Calendar } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { YouthLayout } from '@/components/layout/YouthLayout';
 import { ProgramCategory, PROGRAM_CATEGORY_LABELS } from '@/types';
-import { useApplicationsStore } from '@/stores/applicationsStore';
+import type { CydaoProgram, Application } from '@/types';
 import { CategoryBadge, OpenBadge, Badge } from '@/components/shared/Badge';
 import { Btn } from '@/components/shared/Btn';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -10,90 +11,7 @@ import { Modal, ModalCover, ModalHeader, ModalBody, ModalFooter } from '@/compon
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
 import { FieldSelect } from '@/components/shared/FormField';
-
-interface Program {
-	id: number;
-	title: string;
-	description: string;
-	category: ProgramCategory;
-	applicationDeadline: string;
-	isOpen: boolean;
-}
-
-const mockPrograms: Program[] = [
-	{
-		id: 1,
-		title: 'Leadership Development Program',
-		description:
-			'A structured program designed to cultivate leadership skills, civic responsibility, and community awareness among Cabuyao youth aged 15–30. Participants undergo workshops on public speaking, community organizing, project management, and ethical leadership, culminating in a barangay-level capstone project.',
-		category: ProgramCategory.Leadership,
-		applicationDeadline: '2026-04-30',
-		isOpen: true,
-	},
-	{
-		id: 2,
-		title: 'Environmental Youth Camp',
-		description:
-			"A multi-day immersive camp focused on environmental stewardship, sustainability practices, and ecological awareness across Cabuyao's watersheds and barangays. Participants join cleanup drives, tree-planting activities, and attend sessions on solid waste management and climate action.",
-		category: ProgramCategory.Environment,
-		applicationDeadline: '2026-05-15',
-		isOpen: true,
-	},
-	{
-		id: 3,
-		title: 'Youth Sports League 2026',
-		description:
-			'Citywide inter-barangay sports competition covering basketball, volleyball, and athletics. Open to youth aged 15–25 from all 18 barangays. Teams must be registered by barangay youth councils. Medals and certificates awarded to top finishers.',
-		category: ProgramCategory.Sports,
-		applicationDeadline: '2026-04-10',
-		isOpen: false,
-	},
-	{
-		id: 4,
-		title: 'Arts & Culture Workshop Series',
-		description:
-			"A series of workshops covering visual arts, traditional dance, music production, and digital media — celebrating Cabuyao's cultural heritage. The program runs over eight weekends and culminates in a showcase at the annual CYDAO Cultural Festival at Cabuyao City Plaza.",
-		category: ProgramCategory.ArtsAndCulture,
-		applicationDeadline: '2026-05-20',
-		isOpen: true,
-	},
-	{
-		id: 5,
-		title: 'Livelihood Skills Training (TESDA)',
-		description:
-			'Free TESDA-accredited skills training for youth aged 18–30, covering welding, bread & pastry production, and computer hardware servicing. Participants who complete the program receive a National Certificate and are connected to local employment and enterprise partners.',
-		category: ProgramCategory.Livelihood,
-		applicationDeadline: '2026-04-25',
-		isOpen: true,
-	},
-	{
-		id: 6,
-		title: 'Mental Wellness Support Program',
-		description:
-			'A peer-support and counseling program addressing youth mental health, stress management, and emotional resilience — facilitated by licensed professionals. Includes weekly group sessions, one-on-one consultations, and a community helpline staffed by trained youth volunteers.',
-		category: ProgramCategory.MentalHealth,
-		applicationDeadline: '2026-06-01',
-		isOpen: true,
-	},
-	{
-		id: 7,
-		title: 'Academic Scholarship Grant',
-		description:
-			'Financial assistance for qualified youth enrolled in tertiary education, prioritizing students from low-income households across all 18 barangays. Awardees receive a semestral stipend and are expected to render community service hours in their home barangay.',
-		category: ProgramCategory.Scholarship,
-		applicationDeadline: '2026-03-31',
-		isOpen: false,
-	},
-	{
-		id: 8,
-		title: 'Community Organizing Seminar',
-		description:
-			'Hands-on training on barangay-level youth organizing, advocacy writing, and participatory governance for aspiring youth leaders. Participants draft a real community action plan reviewed by CYDAO staff, with the best plans presented at the Cabuyao Youth Assembly.',
-		category: ProgramCategory.Leadership,
-		applicationDeadline: '2026-05-10',
-		isOpen: true,
-	},
-];
+import api from '@/lib/api';
 
 const categoryOptions = [
 	{ label: 'All', value: 'all' },
@@ -128,13 +46,32 @@ export default function YouthProgramsPage() {
 	const [search, setSearch] = useState('');
 	const [category, setCategory] = useState('all');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
-	const [selected, setSelected] = useState<Program | null>(null);
+	const [selected, setSelected] = useState<CydaoProgram | null>(null);
 
-	const { applications, addApplication } = useApplicationsStore();
-	const appliedIds = new Set(applications.map(a => a.programId));
+	const queryClient = useQueryClient();
+
+	const { data: programs = [], isLoading } = useQuery({
+		queryKey: ['programs'],
+		queryFn: () => api.get<CydaoProgram[]>('/programs').then(r => r.data),
+	});
+
+	const { data: myApplications = [] } = useQuery({
+		queryKey: ['my-applications'],
+		queryFn: () => api.get<Application[]>('/applications/user').then(r => r.data),
+	});
+
+	const appliedIds = new Set(myApplications.map(a => a.programId));
+
+	const applyMutation = useMutation({
+		mutationFn: (programId: number) => api.post('/applications', { programId }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+			setSelected(null);
+		},
+	});
 
 	const filtered = useMemo(() => {
-		let list = [...mockPrograms];
+		let list = [...programs];
 		if (search.trim()) {
 			const q = search.toLowerCase();
 			list = list.filter(p => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
@@ -146,17 +83,7 @@ export default function YouthProgramsPage() {
 			list = list.filter(p => (status === 'open' ? p.isOpen : !p.isOpen));
 		}
 		return list;
-	}, [search, category, status]);
-
-	function handleApply(program: Program) {
-		addApplication({
-			programId: program.id,
-			programTitle: program.title,
-			programCategory: program.category,
-			programDescription: program.description,
-		});
-		setSelected(null);
-	}
+	}, [programs, search, category, status]);
 
 	return (
 		<YouthLayout title="Programs">
@@ -190,11 +117,13 @@ export default function YouthProgramsPage() {
 
 			{/* Results count */}
 			<p className="text-xs uppercase tracking-[2px] text-[#aaaaaa] font-['Instrument_Sans'] mb-5">
-				{filtered.length} program{filtered.length !== 1 ? 's' : ''}
+				{isLoading ? 'Loading...' : `${filtered.length} program${filtered.length !== 1 ? 's' : ''}`}
 			</p>
 
 			{/* Program grid */}
-			{filtered.length === 0 ? (
+			{isLoading ? (
+				<EmptyState variant="page" title="Loading programs..." subtitle="Please wait." />
+			) : filtered.length === 0 ? (
 				<EmptyState variant="page" title="No programs found" subtitle="Try adjusting your filters or search term." />
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -274,8 +203,13 @@ export default function YouthProgramsPage() {
 										Already Applied
 									</Badge>
 								) : selected.isOpen ? (
-									<Btn variant="primary" size="sm" onClick={() => handleApply(selected)}>
-										Apply Now
+									<Btn
+										variant="primary"
+										size="sm"
+										onClick={() => applyMutation.mutate(selected.id)}
+										disabled={applyMutation.isPending}
+									>
+										{applyMutation.isPending ? 'Applying...' : 'Apply Now'}
 									</Btn>
 								) : (
 									<span className="text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] text-[#aaaaaa]">
