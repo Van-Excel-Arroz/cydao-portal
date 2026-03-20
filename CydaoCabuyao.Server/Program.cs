@@ -30,10 +30,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:5173"];
+
 builder.Services.AddCors(options =>
 {
   options.AddDefaultPolicy(policy =>
-    policy.WithOrigins("http://localhost:5173")
+    policy.WithOrigins(allowedOrigins)
           .AllowAnyHeader()
           .AllowAnyMethod());
 });
@@ -47,6 +51,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
 var app = builder.Build();
+
+// Auto-run migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+  db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
