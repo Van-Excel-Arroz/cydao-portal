@@ -209,3 +209,15 @@ export interface CreateAnnouncementDto {
 export interface CreateApplicationDto {
 	programId: number;
 }
+
+export interface EventRegistrationEventDto {
+	id: number;
+	eventId: number;
+	registrantName: string;
+	barangay: Barangay;
+	registeredAt: string;
+}
+
+export interface ApplicationStatusUpdateDto {
+	status: ApplicationStatus;
+}

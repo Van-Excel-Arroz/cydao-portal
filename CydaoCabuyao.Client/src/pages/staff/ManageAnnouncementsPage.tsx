@@ -1,53 +1,16 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, X, ImageIcon } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AnnouncementCategory, ANNOUNCEMENT_CATEGORY_LABELS } from '@/types';
-import type { Announcement } from '@/types';
+import type { Announcement, CreateAnnouncementDto } from '@/types';
 import { AnnouncementBadge } from '@/components/shared/Badge';
 import { Btn } from '@/components/shared/Btn';
 import { DataTable, tableRowClass } from '@/components/shared/DataTable';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
 import { FormField, FieldInput, FieldTextarea, FieldSelect } from '@/components/shared/FormField';
 import { SearchInput } from '@/components/shared/SearchInput';
-
-// --- Mock data (replace with API calls once backend is ready) ---
-const initialAnnouncements: Announcement[] = [
-	{
-		id: 1,
-		title: 'Application Period Now Open for Leadership Program',
-		body: 'Youth members aged 15–30 from all barangays are encouraged to apply for the Q2 Leadership Development Program. The program runs for 12 weeks and covers civic leadership, public speaking, and community organizing. Deadline is April 30, 2026.',
-		category: AnnouncementCategory.New,
-		createdAt: '2026-03-10',
-	},
-	{
-		id: 2,
-		title: 'YORP Registration for 2026 Now Accepting Applications',
-		body: 'Youth organizations seeking accreditation under the Youth Organizations Registration Program may now submit their documentary requirements at the CYDAO office. Accreditation grants access to funding, technical assistance, and official recognition.',
-		category: AnnouncementCategory.YORP,
-		createdAt: '2026-03-08',
-	},
-	{
-		id: 3,
-		title: 'Kabataan Summit Registration Closes April 1',
-		body: 'Only 20 slots remaining for the Kabataan Leadership Summit. Register via the portal before April 1 to secure your slot. The summit will be held at the Cabuyao City Hall Auditorium from April 10–12.',
-		category: AnnouncementCategory.Event,
-		createdAt: '2026-03-05',
-	},
-	{
-		id: 4,
-		title: 'Portal Now Live — Register Your Account',
-		body: 'The CYDAO Cabuyao online portal is now fully operational. Youth members may create accounts, apply for programs, and register for events. Staff may access the admin panel to manage submissions and content.',
-		category: AnnouncementCategory.Update,
-		createdAt: '2026-03-01',
-	},
-	{
-		id: 5,
-		title: 'Livelihood Training Grant Available for Q2 2026',
-		body: 'CYDAO is partnering with TESDA to offer free skills training for youth aged 18–30. Limited slots per barangay are available for welding, bread & pastry production, and computer hardware servicing.',
-		category: AnnouncementCategory.New,
-		createdAt: '2026-02-25',
-	},
-];
+import api from '@/lib/api';
 
 interface AnnouncementForm {
 	title: string;
@@ -64,7 +27,7 @@ const emptyForm: AnnouncementForm = {
 const ALL = -1;
 
 export default function ManageAnnouncementsPage() {
-	const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
+	const queryClient = useQueryClient();
 	const [search, setSearch] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState<number>(ALL);
 	const [modalOpen, setModalOpen] = useState(false);
@@ -73,6 +36,35 @@ export default function ManageAnnouncementsPage() {
 	const [formErrors, setFormErrors] = useState<Partial<Record<keyof AnnouncementForm, string>>>({});
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+	const { data: announcements = [], isLoading } = useQuery({
+		queryKey: ['announcements'],
+		queryFn: () => api.get<Announcement[]>('/announcements').then(r => r.data),
+	});
+
+	const createMutation = useMutation({
+		mutationFn: (dto: CreateAnnouncementDto) => api.post('/announcements', dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['announcements'] });
+			closeModal();
+		},
+	});
+
+	const updateMutation = useMutation({
+		mutationFn: ({ id, dto }: { id: number; dto: CreateAnnouncementDto }) => api.put(`/announcements/${id}`, dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['announcements'] });
+			closeModal();
+		},
+	});
+
+	const deleteMutation = useMutation({
+		mutationFn: (id: number) => api.delete(`/announcements/${id}`),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['announcements'] });
+			setConfirmDeleteId(null);
+		},
+	});
 
 	const filtered = announcements.filter(a => {
 		const matchSearch =
@@ -123,26 +115,16 @@ export default function ManageAnnouncementsPage() {
 
 	function handleSave() {
 		if (!validate()) return;
-		const category = Number(form.category) as AnnouncementCategory;
+		const dto: CreateAnnouncementDto = {
+			title: form.title,
+			body: form.body,
+			category: Number(form.category) as AnnouncementCategory,
+		};
 		if (editingId !== null) {
-			setAnnouncements(prev => prev.map(a => (a.id === editingId ? { ...a, ...form, category } : a)));
+			updateMutation.mutate({ id: editingId, dto });
 		} else {
-			setAnnouncements(prev => [
-				{
-					id: Date.now(),
-					...form,
-					category,
-					createdAt: new Date().toISOString().split('T')[0],
-				},
-				...prev,
-			]);
+			createMutation.mutate(dto);
 		}
-		closeModal();
-	}
-
-	function handleDelete(id: number) {
-		setAnnouncements(prev => prev.filter(a => a.id !== id));
-		setConfirmDeleteId(null);
 	}
 
 	function formatDate(dateStr: string) {
@@ -152,6 +134,8 @@ export default function ManageAnnouncementsPage() {
 			year: 'numeric',
 		});
 	}
+
+	const isSaving = createMutation.isPending || updateMutation.isPending;
 
 	return (
 		<AdminLayout title="Announcements" description="Post and manage CYDAO announcements." noScroll>
@@ -194,8 +178,8 @@ export default function ManageAnnouncementsPage() {
 						{ label: 'Actions', center: true },
 					]}
 					colsClass="grid-cols-[2fr_1fr_1fr_120px]"
-					empty={filtered.length === 0}
-					emptyMessage="No announcements match your filters."
+					empty={!isLoading && filtered.length === 0}
+					emptyMessage={isLoading ? 'Loading...' : 'No announcements match your filters.'}
 					footer={`Showing ${filtered.length} of ${announcements.length} announcements`}
 				>
 					{filtered.map((announcement, i) => (
@@ -220,7 +204,12 @@ export default function ManageAnnouncementsPage() {
 							<div className="px-5 py-3.5 flex items-center justify-center gap-3">
 								{confirmDeleteId === announcement.id ? (
 									<>
-										<Btn variant="danger" size="sm" onClick={() => handleDelete(announcement.id)}>
+										<Btn
+											variant="danger"
+											size="sm"
+											onClick={() => deleteMutation.mutate(announcement.id)}
+											disabled={deleteMutation.isPending}
+										>
 											Yes
 										</Btn>
 										<Btn variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>
@@ -315,8 +304,8 @@ export default function ManageAnnouncementsPage() {
 						<Btn variant="ghost" onClick={closeModal} className="px-4 py-2 text-sm">
 							Cancel
 						</Btn>
-						<Btn variant="primary" size="lg" onClick={handleSave}>
-							{editingId !== null ? 'Save Changes' : 'Create Announcement'}
+						<Btn variant="primary" size="lg" onClick={handleSave} disabled={isSaving}>
+							{isSaving ? 'Saving...' : editingId !== null ? 'Save Changes' : 'Create Announcement'}
 						</Btn>
 					</div>
 				</ModalFooter>

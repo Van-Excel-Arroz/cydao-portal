@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Users } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import {
@@ -8,7 +9,7 @@ import {
 	APPLICATION_STATUS_LABELS,
 	BARANGAY_LABELS,
 } from '@/types';
-import type { CydaoProgram } from '@/types';
+import type { CydaoProgram, Application, CreateProgramDto, ApplicationStatusUpdateDto } from '@/types';
 import { CategoryBadge } from '@/components/shared/Badge';
 import { Btn } from '@/components/shared/Btn';
 import { DataTable, tableRowClass } from '@/components/shared/DataTable';
@@ -17,189 +18,7 @@ import { ToggleSwitch } from '@/components/shared/ToggleSwitch';
 import { FormField, FieldInput, FieldTextarea, FieldSelect } from '@/components/shared/FormField';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
-
-// --- Mock data (replace with API calls once backend is ready) ---
-const initialPrograms: CydaoProgram[] = [
-	{
-		id: 1,
-		title: 'Leadership Development Program',
-		description: 'A comprehensive leadership training program for youth aged 15–30 from all barangays of Cabuyao.',
-		category: ProgramCategory.Leadership,
-		applicationDeadline: '2026-04-30',
-		isOpen: true,
-		createdAt: '2026-01-15T00:00:00Z',
-	},
-	{
-		id: 2,
-		title: 'Environmental Awareness Campaign',
-		description:
-			'Community-based environmental program focusing on waste segregation, tree planting, and river cleanup.',
-		category: ProgramCategory.Environment,
-		applicationDeadline: '2026-04-15',
-		isOpen: true,
-		createdAt: '2026-01-20T00:00:00Z',
-	},
-	{
-		id: 3,
-		title: 'Youth Sports Festival',
-		description: 'Inter-barangay sports competition promoting sportsmanship and physical wellness among Cabuyao youth.',
-		category: ProgramCategory.Sports,
-		applicationDeadline: '2026-03-31',
-		isOpen: false,
-		createdAt: '2026-01-25T00:00:00Z',
-	},
-	{
-		id: 4,
-		title: 'Sining at Kultura Workshop',
-		description: 'Arts and cultural workshop celebrating Filipino heritage through visual arts, dance, and music.',
-		category: ProgramCategory.ArtsAndCulture,
-		applicationDeadline: '2026-05-15',
-		isOpen: true,
-		createdAt: '2026-02-01T00:00:00Z',
-	},
-	{
-		id: 5,
-		title: 'Livelihood Skills Training',
-		description:
-			'Practical skills training in cooking, welding, dressmaking, and digital marketing for out-of-school youth.',
-		category: ProgramCategory.Livelihood,
-		applicationDeadline: '2026-05-30',
-		isOpen: true,
-		createdAt: '2026-02-10T00:00:00Z',
-	},
-	{
-		id: 6,
-		title: 'Mental Health Awareness Forum',
-		description:
-			'A series of seminars and group sessions addressing mental health awareness, stress management, and peer support.',
-		category: ProgramCategory.MentalHealth,
-		applicationDeadline: '2026-04-20',
-		isOpen: true,
-		createdAt: '2026-02-15T00:00:00Z',
-	},
-	{
-		id: 7,
-		title: 'CYDAO Scholarship Grant',
-		description: 'Financial assistance program for deserving youth members pursuing tertiary education within Cabuyao.',
-		category: ProgramCategory.Scholarship,
-		applicationDeadline: '2026-03-15',
-		isOpen: false,
-		createdAt: '2026-02-20T00:00:00Z',
-	},
-];
-
-interface MockApplication {
-	id: number;
-	programId: number;
-	applicantName: string;
-	barangay: number;
-	motivation: string;
-	status: ApplicationStatus;
-	submittedAt: string;
-}
-
-const initialApplications: MockApplication[] = [
-	{
-		id: 1,
-		programId: 1,
-		applicantName: 'Juan dela Cruz',
-		barangay: 16,
-		motivation:
-			'I want to develop my leadership skills to serve my community better and become a role model for other youth in Cabuyao.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-01T10:00:00Z',
-	},
-	{
-		id: 2,
-		programId: 1,
-		applicantName: 'Maria Santos',
-		barangay: 3,
-		motivation:
-			'As a student leader in my school, this program would help me expand my skills and connect with other youth leaders across Cabuyao.',
-		status: ApplicationStatus.UnderReview,
-		submittedAt: '2026-03-02T09:30:00Z',
-	},
-	{
-		id: 3,
-		programId: 1,
-		applicantName: 'Carlo Reyes',
-		barangay: 9,
-		motivation:
-			'I believe in empowering the youth of Cabuyao. This program aligns with my personal advocacy of servant leadership.',
-		status: ApplicationStatus.Approved,
-		submittedAt: '2026-03-03T14:00:00Z',
-	},
-	{
-		id: 4,
-		programId: 1,
-		applicantName: 'Ana Lim',
-		barangay: 15,
-		motivation:
-			'I have always been passionate about community work. Joining this program is the next step in my journey as a youth leader.',
-		status: ApplicationStatus.Rejected,
-		submittedAt: '2026-03-04T11:00:00Z',
-	},
-	{
-		id: 5,
-		programId: 2,
-		applicantName: 'Rico Flores',
-		barangay: 6,
-		motivation:
-			'Environmental protection is close to my heart. I want to make a tangible impact in keeping Cabuyao clean and green.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-05T08:00:00Z',
-	},
-	{
-		id: 6,
-		programId: 2,
-		applicantName: 'Liza Ramos',
-		barangay: 7,
-		motivation:
-			'I volunteer in local clean-up drives and this program would give me more knowledge and impact in environmental advocacy.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-06T09:00:00Z',
-	},
-	{
-		id: 7,
-		programId: 4,
-		applicantName: 'Paolo Cruz',
-		barangay: 2,
-		motivation:
-			'Art is my passion. I want to use this workshop to hone my skills and represent our barangay in cultural activities.',
-		status: ApplicationStatus.Approved,
-		submittedAt: '2026-03-07T10:00:00Z',
-	},
-	{
-		id: 8,
-		programId: 4,
-		applicantName: 'Sofia Garcia',
-		barangay: 4,
-		motivation:
-			'I have been dancing since I was 7 years old. This workshop is an opportunity to share Filipino culture with more people.',
-		status: ApplicationStatus.UnderReview,
-		submittedAt: '2026-03-08T11:00:00Z',
-	},
-	{
-		id: 9,
-		programId: 4,
-		applicantName: 'Diego Tan',
-		barangay: 10,
-		motivation:
-			'I am a visual artist who wants to contribute to the preservation of Filipino heritage through my work.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-09T12:00:00Z',
-	},
-	{
-		id: 10,
-		programId: 5,
-		applicantName: 'Grace Villanueva',
-		barangay: 11,
-		motivation:
-			'I am an out-of-school youth looking for practical skills to start a small business and support my family.',
-		status: ApplicationStatus.Pending,
-		submittedAt: '2026-03-10T13:00:00Z',
-	},
-];
+import api from '@/lib/api';
 
 interface ProgramForm {
 	title: string;
@@ -234,8 +53,7 @@ const APP_STATUS_TABS: Array<{ key: ApplicationStatus | 'all'; label: string }> 
 ];
 
 export default function ManageProgramsPage() {
-	const [programs, setPrograms] = useState<CydaoProgram[]>(initialPrograms);
-	const [applications, setApplications] = useState<MockApplication[]>(initialApplications);
+	const queryClient = useQueryClient();
 	const [search, setSearch] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState<number>(ALL);
 	const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all');
@@ -247,6 +65,48 @@ export default function ManageProgramsPage() {
 	const [applicantsProgramId, setApplicantsProgramId] = useState<number | null>(null);
 	const [appStatusFilter, setAppStatusFilter] = useState<ApplicationStatus | 'all'>('all');
 
+	const { data: programs = [], isLoading } = useQuery({
+		queryKey: ['programs'],
+		queryFn: () => api.get<CydaoProgram[]>('/programs').then(r => r.data),
+	});
+
+	const { data: applications = [] } = useQuery({
+		queryKey: ['applications'],
+		queryFn: () => api.get<Application[]>('/applications').then(r => r.data),
+	});
+
+	const createMutation = useMutation({
+		mutationFn: (dto: CreateProgramDto) => api.post('/programs', dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['programs'] });
+			closeModal();
+		},
+	});
+
+	const updateMutation = useMutation({
+		mutationFn: ({ id, dto }: { id: number; dto: CreateProgramDto }) => api.put(`/programs/${id}`, dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['programs'] });
+			closeModal();
+		},
+	});
+
+	const deleteMutation = useMutation({
+		mutationFn: (id: number) => api.delete(`/programs/${id}`),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['programs'] });
+			setConfirmDeleteId(null);
+		},
+	});
+
+	const statusMutation = useMutation({
+		mutationFn: ({ id, dto }: { id: number; dto: ApplicationStatusUpdateDto }) =>
+			api.put(`/applications/${id}/status`, dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['applications'] });
+		},
+	});
+
 	const filtered = programs.filter(p => {
 		const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
 		const matchCategory = categoryFilter === ALL || p.category === categoryFilter;
@@ -255,11 +115,9 @@ export default function ManageProgramsPage() {
 	});
 
 	const applicantsProgram = programs.find(p => p.id === applicantsProgramId) ?? null;
-	const panelApps = applications.filter(a => {
-		if (a.programId !== applicantsProgramId) return false;
-		return appStatusFilter === 'all' || a.status === appStatusFilter;
-	});
+
 	const allPanelApps = applications.filter(a => a.programId === applicantsProgramId);
+	const panelApps = allPanelApps.filter(a => appStatusFilter === 'all' || a.status === appStatusFilter);
 
 	function appCountFor(programId: number) {
 		return applications.filter(a => a.programId === programId).length;
@@ -268,10 +126,6 @@ export default function ManageProgramsPage() {
 	function openApplicants(programId: number) {
 		setApplicantsProgramId(programId);
 		setAppStatusFilter('all');
-	}
-
-	function updateAppStatus(appId: number, status: ApplicationStatus) {
-		setApplications(prev => prev.map(a => (a.id === appId ? { ...a, status } : a)));
 	}
 
 	function openCreate() {
@@ -310,19 +164,21 @@ export default function ManageProgramsPage() {
 
 	function handleSave() {
 		if (!validate()) return;
-		const category = Number(form.category) as ProgramCategory;
+		const dto: CreateProgramDto = {
+			title: form.title,
+			description: form.description,
+			category: Number(form.category) as ProgramCategory,
+			applicationDeadline: form.applicationDeadline,
+			isOpen: form.isOpen,
+		};
 		if (editingId !== null) {
-			setPrograms(prev => prev.map(p => (p.id === editingId ? { ...p, ...form, category } : p)));
+			updateMutation.mutate({ id: editingId, dto });
 		} else {
-			setPrograms(prev => [{ id: Date.now(), ...form, category, createdAt: new Date().toISOString() }, ...prev]);
+			createMutation.mutate(dto);
 		}
-		closeModal();
 	}
 
-	function handleDelete(id: number) {
-		setPrograms(prev => prev.filter(p => p.id !== id));
-		setConfirmDeleteId(null);
-	}
+	const isSaving = createMutation.isPending || updateMutation.isPending;
 
 	return (
 		<AdminLayout title="Programs" description="Create and manage CYDAO youth programs." noScroll>
@@ -369,8 +225,8 @@ export default function ManageProgramsPage() {
 						{ label: 'Actions', center: true },
 					]}
 					colsClass="grid-cols-[2fr_1fr_1fr_1fr_100px_120px]"
-					empty={filtered.length === 0}
-					emptyMessage="No programs match your filters."
+					empty={!isLoading && filtered.length === 0}
+					emptyMessage={isLoading ? 'Loading...' : 'No programs match your filters.'}
 					footer={`Showing ${filtered.length} of ${programs.length} programs`}
 				>
 					{filtered.map((program, i) => {
@@ -429,7 +285,12 @@ export default function ManageProgramsPage() {
 								<div className="px-5 py-3.5 flex items-center justify-center gap-3">
 									{confirmDeleteId === program.id ? (
 										<>
-											<Btn variant="danger" size="sm" onClick={() => handleDelete(program.id)}>
+											<Btn
+												variant="danger"
+												size="sm"
+												onClick={() => deleteMutation.mutate(program.id)}
+												disabled={deleteMutation.isPending}
+											>
 												Yes
 											</Btn>
 											<Btn variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>
@@ -510,28 +371,29 @@ export default function ManageProgramsPage() {
 										<div className="flex items-start gap-4">
 											<div className="w-44 shrink-0">
 												<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-													{app.applicantName}
+													{app.user.firstName} {app.user.lastName}
 												</p>
 												<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5">
-													{BARANGAY_LABELS[app.barangay as keyof typeof BARANGAY_LABELS]}
+													{BARANGAY_LABELS[app.user.barangay]}
 												</p>
 												<p className="text-[10px] text-[#aaaaaa] font-['Instrument_Sans'] mt-1">
-													{new Date(app.submittedAt).toLocaleDateString('en-PH', {
+													{new Date(app.createdAt).toLocaleDateString('en-PH', {
 														month: 'short',
 														day: 'numeric',
 														year: 'numeric',
 													})}
 												</p>
 											</div>
-											<div className="flex-1 min-w-0">
-												<p className="text-xs text-[#0d0d0d] font-['Instrument_Sans'] leading-relaxed line-clamp-2">
-													{app.motivation}
-												</p>
-											</div>
-											<div className="shrink-0">
+
+											<div className="shrink-0 ml-auto">
 												<select
 													value={app.status}
-													onChange={e => updateAppStatus(app.id, Number(e.target.value) as ApplicationStatus)}
+													onChange={e =>
+														statusMutation.mutate({
+															id: app.id,
+															dto: { status: Number(e.target.value) as ApplicationStatus },
+														})
+													}
 													className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-1 border cursor-pointer focus:outline-none ${
 														{
 															0: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]',
@@ -635,8 +497,8 @@ export default function ManageProgramsPage() {
 						<Btn variant="ghost" onClick={closeModal} className="px-4 py-2 text-sm">
 							Cancel
 						</Btn>
-						<Btn variant="primary" size="lg" onClick={handleSave}>
-							{editingId !== null ? 'Save Changes' : 'Create Program'}
+						<Btn variant="primary" size="lg" onClick={handleSave} disabled={isSaving}>
+							{isSaving ? 'Saving...' : editingId !== null ? 'Save Changes' : 'Create Program'}
 						</Btn>
 					</div>
 				</ModalFooter>

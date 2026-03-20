@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Users } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { BARANGAY_LABELS } from '@/types';
-import type { CydaoEvent } from '@/types';
+import type { CydaoEvent, CreateEventDto, EventRegistrationEventDto } from '@/types';
 import { Btn } from '@/components/shared/Btn';
 import { DataTable, tableRowClass } from '@/components/shared/DataTable';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/shared/Modal';
@@ -10,89 +11,7 @@ import { ToggleSwitch } from '@/components/shared/ToggleSwitch';
 import { FormField, FieldInput, FieldTextarea } from '@/components/shared/FormField';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
-
-// --- Mock data (replace with API calls once backend is ready) ---
-const initialEvents: CydaoEvent[] = [
-	{
-		id: 1,
-		title: 'CYDAO Youth Summit 2026',
-		description: 'Annual gathering of youth leaders from all barangays of Cabuyao to discuss community initiatives.',
-		startDate: '2026-04-10T08:00:00Z',
-		endDate: '2026-04-10T17:00:00Z',
-		venue: 'Cabuyao City Hall Auditorium',
-		availableSlots: 200,
-		isOpen: true,
-		createdAt: '2026-02-01T00:00:00Z',
-	},
-	{
-		id: 2,
-		title: 'Inter-Barangay Basketball Tournament',
-		description: 'Friendly basketball competition among youth representatives of all 18 barangays of Cabuyao.',
-		startDate: '2026-04-20T07:00:00Z',
-		endDate: '2026-04-22T18:00:00Z',
-		venue: 'Cabuyao Sports Complex',
-		availableSlots: 150,
-		isOpen: true,
-		createdAt: '2026-02-05T00:00:00Z',
-	},
-	{
-		id: 3,
-		title: 'Environmental Clean-Up Drive',
-		description: 'Community clean-up at Laguna de Bay shoreline involving youth volunteers across all barangays.',
-		startDate: '2026-03-22T06:00:00Z',
-		endDate: '2026-03-22T12:00:00Z',
-		venue: 'Mamatid Shoreline, Cabuyao',
-		availableSlots: 100,
-		isOpen: false,
-		createdAt: '2026-02-10T00:00:00Z',
-	},
-	{
-		id: 4,
-		title: 'Skills Training Workshop: Digital Literacy',
-		description: 'Hands-on workshop covering basic computer skills, social media responsibility, and digital entrepreneurship.',
-		startDate: '2026-05-05T09:00:00Z',
-		endDate: '2026-05-05T16:00:00Z',
-		venue: 'Cabuyao City Library and Learning Hub',
-		availableSlots: 60,
-		isOpen: true,
-		createdAt: '2026-02-15T00:00:00Z',
-	},
-	{
-		id: 5,
-		title: 'Kabataang Cabuyao Cultural Night',
-		description: 'Showcase of local talent featuring traditional and contemporary Filipino arts, dance, and music performances.',
-		startDate: '2026-06-12T18:00:00Z',
-		endDate: '2026-06-12T22:00:00Z',
-		venue: 'Cabuyao City Plaza',
-		availableSlots: 500,
-		isOpen: true,
-		createdAt: '2026-02-20T00:00:00Z',
-	},
-];
-
-interface MockRegistration {
-	id: number;
-	eventId: number;
-	registrantName: string;
-	barangay: number;
-	registeredAt: string;
-}
-
-const initialRegistrations: MockRegistration[] = [
-	{ id: 1, eventId: 1, registrantName: 'Juan dela Cruz', barangay: 16, registeredAt: '2026-03-01T10:00:00Z' },
-	{ id: 2, eventId: 1, registrantName: 'Maria Santos', barangay: 3, registeredAt: '2026-03-02T09:30:00Z' },
-	{ id: 3, eventId: 1, registrantName: 'Carlo Reyes', barangay: 9, registeredAt: '2026-03-03T14:00:00Z' },
-	{ id: 4, eventId: 1, registrantName: 'Ana Lim', barangay: 15, registeredAt: '2026-03-04T11:00:00Z' },
-	{ id: 5, eventId: 1, registrantName: 'Rico Flores', barangay: 6, registeredAt: '2026-03-05T08:00:00Z' },
-	{ id: 6, eventId: 2, registrantName: 'Liza Ramos', barangay: 7, registeredAt: '2026-03-06T09:00:00Z' },
-	{ id: 7, eventId: 2, registrantName: 'Paolo Cruz', barangay: 2, registeredAt: '2026-03-07T10:00:00Z' },
-	{ id: 8, eventId: 2, registrantName: 'Sofia Garcia', barangay: 4, registeredAt: '2026-03-08T11:00:00Z' },
-	{ id: 9, eventId: 3, registrantName: 'Diego Tan', barangay: 10, registeredAt: '2026-03-09T12:00:00Z' },
-	{ id: 10, eventId: 3, registrantName: 'Grace Villanueva', barangay: 11, registeredAt: '2026-03-10T13:00:00Z' },
-	{ id: 11, eventId: 3, registrantName: 'Kevin Mendoza', barangay: 1, registeredAt: '2026-03-11T14:00:00Z' },
-	{ id: 12, eventId: 4, registrantName: 'Jasmine Ocampo', barangay: 5, registeredAt: '2026-03-12T08:00:00Z' },
-	{ id: 13, eventId: 4, registrantName: 'Bryan Torres', barangay: 12, registeredAt: '2026-03-13T09:00:00Z' },
-];
+import api from '@/lib/api';
 
 interface EventForm {
 	title: string;
@@ -121,8 +40,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function ManageEventsPage() {
-	const [events, setEvents] = useState<CydaoEvent[]>(initialEvents);
-	const [registrations, setRegistrations] = useState<MockRegistration[]>(initialRegistrations);
+	const queryClient = useQueryClient();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all');
 	const [modalOpen, setModalOpen] = useState(false);
@@ -133,6 +51,50 @@ export default function ManageEventsPage() {
 	const [registrantsEventId, setRegistrantsEventId] = useState<number | null>(null);
 	const [confirmRemoveRegId, setConfirmRemoveRegId] = useState<number | null>(null);
 
+	const { data: events = [], isLoading } = useQuery({
+		queryKey: ['events'],
+		queryFn: () => api.get<CydaoEvent[]>('/events').then(r => r.data),
+	});
+
+	const { data: panelRegs = [] } = useQuery({
+		queryKey: ['registrations', 'event', registrantsEventId],
+		queryFn: () =>
+			api.get<EventRegistrationEventDto[]>(`/eventregistrations/event/${registrantsEventId}`).then(r => r.data),
+		enabled: registrantsEventId !== null,
+	});
+
+	const createMutation = useMutation({
+		mutationFn: (dto: CreateEventDto) => api.post('/events', dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['events'] });
+			closeModal();
+		},
+	});
+
+	const updateMutation = useMutation({
+		mutationFn: ({ id, dto }: { id: number; dto: CreateEventDto }) => api.put(`/events/${id}`, dto),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['events'] });
+			closeModal();
+		},
+	});
+
+	const deleteMutation = useMutation({
+		mutationFn: (id: number) => api.delete(`/events/${id}`),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['events'] });
+			setConfirmDeleteId(null);
+		},
+	});
+
+	const removeRegMutation = useMutation({
+		mutationFn: (regId: number) => api.delete(`/eventregistrations/${regId}`),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['registrations', 'event', registrantsEventId] });
+			setConfirmRemoveRegId(null);
+		},
+	});
+
 	const filtered = events.filter(e => {
 		const matchSearch = e.title.toLowerCase().includes(search.toLowerCase());
 		const matchStatus = statusFilter === 'all' || (statusFilter === 'open' ? e.isOpen : !e.isOpen);
@@ -140,11 +102,6 @@ export default function ManageEventsPage() {
 	});
 
 	const registrantsEvent = events.find(e => e.id === registrantsEventId) ?? null;
-	const panelRegs = registrations.filter(r => r.eventId === registrantsEventId);
-
-	function regCountFor(eventId: number) {
-		return registrations.filter(r => r.eventId === eventId).length;
-	}
 
 	function openRegistrants(eventId: number) {
 		setRegistrantsEventId(eventId);
@@ -153,11 +110,6 @@ export default function ManageEventsPage() {
 
 	function closeRegistrants() {
 		setRegistrantsEventId(null);
-		setConfirmRemoveRegId(null);
-	}
-
-	function removeRegistration(regId: number) {
-		setRegistrations(prev => prev.filter(r => r.id !== regId));
 		setConfirmRemoveRegId(null);
 	}
 
@@ -204,37 +156,27 @@ export default function ManageEventsPage() {
 
 	function handleSave() {
 		if (!validate()) return;
+		const dto: CreateEventDto = {
+			title: form.title,
+			description: form.description,
+			startDate: new Date(form.startDate).toISOString(),
+			endDate: new Date(form.endDate).toISOString(),
+			venue: form.venue,
+			availableSlots: form.availableSlots,
+			isOpen: form.isOpen,
+		};
 		if (editingId !== null) {
-			setEvents(prev =>
-				prev.map(e =>
-					e.id === editingId
-						? { ...e, ...form, startDate: new Date(form.startDate).toISOString(), endDate: new Date(form.endDate).toISOString() }
-						: e,
-				),
-			);
+			updateMutation.mutate({ id: editingId, dto });
 		} else {
-			setEvents(prev => [
-				{
-					id: Date.now(),
-					...form,
-					startDate: new Date(form.startDate).toISOString(),
-					endDate: new Date(form.endDate).toISOString(),
-					createdAt: new Date().toISOString(),
-				},
-				...prev,
-			]);
+			createMutation.mutate(dto);
 		}
-		closeModal();
-	}
-
-	function handleDelete(id: number) {
-		setEvents(prev => prev.filter(e => e.id !== id));
-		setConfirmDeleteId(null);
 	}
 
 	function formatDate(iso: string) {
 		return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 	}
+
+	const isSaving = createMutation.isPending || updateMutation.isPending;
 
 	return (
 		<AdminLayout title="Events" description="Create and manage CYDAO events." noScroll>
@@ -248,11 +190,7 @@ export default function ManageEventsPage() {
 						containerClassName="w-56"
 					/>
 
-					<SegmentedControl
-						options={[...STATUS_OPTIONS]}
-						value={statusFilter}
-						onChange={setStatusFilter}
-					/>
+					<SegmentedControl options={[...STATUS_OPTIONS]} value={statusFilter} onChange={setStatusFilter} />
 
 					<div className="flex-1" />
 
@@ -272,87 +210,84 @@ export default function ManageEventsPage() {
 						{ label: 'Actions', center: true },
 					]}
 					colsClass="grid-cols-[2fr_1.5fr_1fr_110px_1fr_120px]"
-					empty={filtered.length === 0}
-					emptyMessage="No events match your filters."
+					empty={!isLoading && filtered.length === 0}
+					emptyMessage={isLoading ? 'Loading...' : 'No events match your filters.'}
 					footer={`Showing ${filtered.length} of ${events.length} events`}
 				>
-					{filtered.map((event, i) => {
-						const regCount = regCountFor(event.id);
-						return (
-							<div
-								key={event.id}
-								className={`grid grid-cols-[2fr_1.5fr_1fr_110px_1fr_120px] ${tableRowClass(i)}`}
-							>
-								<div className="px-5 py-3.5">
-									<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
-										{event.title}
-									</p>
-									<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
-										{event.description}
-									</p>
-								</div>
-
-								<div className="px-5 py-3.5 flex items-center">
-									<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans'] line-clamp-1">{event.venue}</p>
-								</div>
-
-								<div className="px-5 py-3.5 flex items-center">
-									<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(event.startDate)}</p>
-								</div>
-
-								<div className="px-5 py-3.5 flex items-center justify-center">
-									{regCount > 0 ? (
-										<button
-											onClick={() => openRegistrants(event.id)}
-											className="flex items-center gap-1.5 text-[#0d0d0d] hover:text-[#d42b2b] transition-colors cursor-pointer"
-										>
-											<Users size={13} />
-											<span className="text-sm font-semibold font-['Instrument_Sans']">
-												{regCount} / {event.availableSlots}
-											</span>
-										</button>
-									) : (
-										<span className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">0 / {event.availableSlots}</span>
-									)}
-								</div>
-
-								<div className="px-5 py-3.5 flex items-center justify-center">
-									<span
-										className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${
-											event.isOpen
-												? 'bg-green-50 text-green-700 border-green-200'
-												: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]'
-										}`}
-									>
-										{event.isOpen ? 'Open' : 'Closed'}
-									</span>
-								</div>
-
-								<div className="px-5 py-3.5 flex items-center justify-center gap-3">
-									{confirmDeleteId === event.id ? (
-										<>
-											<Btn variant="danger" size="sm" onClick={() => handleDelete(event.id)}>Yes</Btn>
-											<Btn variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>No</Btn>
-										</>
-									) : (
-										<>
-											<Btn variant="icon" onClick={() => openEdit(event)} title="Edit">
-												<Pencil size={14} />
-											</Btn>
-											<Btn
-												variant="icon"
-												onClick={() => setConfirmDeleteId(event.id)}
-												title="Delete"
-												className="hover:text-[#d42b2b]"
-											>
-												<Trash2 size={14} />
-											</Btn>
-										</>
-									)}
-								</div>
+					{filtered.map((event, i) => (
+						<div key={event.id} className={`grid grid-cols-[2fr_1.5fr_1fr_110px_1fr_120px] ${tableRowClass(i)}`}>
+							<div className="px-5 py-3.5">
+								<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans'] leading-tight">
+									{event.title}
+								</p>
+								<p className="text-xs text-[#aaaaaa] font-['Instrument_Sans'] mt-0.5 line-clamp-1">
+									{event.description}
+								</p>
 							</div>
-						);
-					})}
+
+							<div className="px-5 py-3.5 flex items-center">
+								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans'] line-clamp-1">{event.venue}</p>
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center">
+								<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{formatDate(event.startDate)}</p>
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<button
+									onClick={() => openRegistrants(event.id)}
+									className="flex items-center gap-1.5 text-[#0d0d0d] hover:text-[#d42b2b] transition-colors cursor-pointer"
+								>
+									<Users size={13} />
+									<span className="text-sm font-semibold font-['Instrument_Sans']">— / {event.availableSlots}</span>
+								</button>
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center justify-center">
+								<span
+									className={`text-[10px] font-bold tracking-[1px] uppercase font-['Instrument_Sans'] px-2 py-0.5 border ${
+										event.isOpen
+											? 'bg-green-50 text-green-700 border-green-200'
+											: 'bg-[#f5f5f5] text-[#aaaaaa] border-[#e0e0e0]'
+									}`}
+								>
+									{event.isOpen ? 'Open' : 'Closed'}
+								</span>
+							</div>
+
+							<div className="px-5 py-3.5 flex items-center justify-center gap-3">
+								{confirmDeleteId === event.id ? (
+									<>
+										<Btn
+											variant="danger"
+											size="sm"
+											onClick={() => deleteMutation.mutate(event.id)}
+											disabled={deleteMutation.isPending}
+										>
+											Yes
+										</Btn>
+										<Btn variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>
+											No
+										</Btn>
+									</>
+								) : (
+									<>
+										<Btn variant="icon" onClick={() => openEdit(event)} title="Edit">
+											<Pencil size={14} />
+										</Btn>
+										<Btn
+											variant="icon"
+											onClick={() => setConfirmDeleteId(event.id)}
+											title="Delete"
+											className="hover:text-[#d42b2b]"
+										>
+											<Trash2 size={14} />
+										</Btn>
+									</>
+								)}
+							</div>
+						</div>
+					))}
 				</DataTable>
 			</div>
 
@@ -400,12 +335,12 @@ export default function ManageEventsPage() {
 										className={`grid grid-cols-[1fr_1fr_1fr_80px] border-b border-[#f5f5f5] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
 									>
 										<div className="px-5 py-3 flex items-center">
-											<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans']">{reg.registrantName}</p>
+											<p className="text-sm font-semibold text-[#0d0d0d] font-['Instrument_Sans']">
+												{reg.registrantName}
+											</p>
 										</div>
 										<div className="px-5 py-3 flex items-center">
-											<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">
-												{BARANGAY_LABELS[reg.barangay as keyof typeof BARANGAY_LABELS]}
-											</p>
+											<p className="text-sm text-[#0d0d0d] font-['Instrument_Sans']">{BARANGAY_LABELS[reg.barangay]}</p>
 										</div>
 										<div className="px-5 py-3 flex items-center">
 											<p className="text-sm text-[#aaaaaa] font-['Instrument_Sans']">
@@ -419,8 +354,23 @@ export default function ManageEventsPage() {
 										<div className="px-5 py-3 flex items-center">
 											{confirmRemoveRegId === reg.id ? (
 												<div className="flex items-center gap-2">
-													<Btn variant="danger" size="sm" className="text-[9px] px-2 py-1" onClick={() => removeRegistration(reg.id)}>Yes</Btn>
-													<Btn variant="ghost" size="sm" className="text-[9px]" onClick={() => setConfirmRemoveRegId(null)}>No</Btn>
+													<Btn
+														variant="danger"
+														size="sm"
+														className="text-[9px] px-2 py-1"
+														onClick={() => removeRegMutation.mutate(reg.id)}
+														disabled={removeRegMutation.isPending}
+													>
+														Yes
+													</Btn>
+													<Btn
+														variant="ghost"
+														size="sm"
+														className="text-[9px]"
+														onClick={() => setConfirmRemoveRegId(null)}
+													>
+														No
+													</Btn>
 												</div>
 											) : (
 												<Btn
@@ -518,19 +468,18 @@ export default function ManageEventsPage() {
 								Toggle to open or close this event
 							</p>
 						</div>
-						<ToggleSwitch
-							checked={form.isOpen}
-							onChange={checked => setForm(f => ({ ...f, isOpen: checked }))}
-						/>
+						<ToggleSwitch checked={form.isOpen} onChange={checked => setForm(f => ({ ...f, isOpen: checked }))} />
 					</div>
 				</ModalBody>
 
 				<ModalFooter>
 					<div />
 					<div className="flex items-center gap-3">
-						<Btn variant="ghost" onClick={closeModal} className="px-4 py-2 text-sm">Cancel</Btn>
-						<Btn variant="primary" size="lg" onClick={handleSave}>
-							{editingId !== null ? 'Save Changes' : 'Create Event'}
+						<Btn variant="ghost" onClick={closeModal} className="px-4 py-2 text-sm">
+							Cancel
+						</Btn>
+						<Btn variant="primary" size="lg" onClick={handleSave} disabled={isSaving}>
+							{isSaving ? 'Saving...' : editingId !== null ? 'Save Changes' : 'Create Event'}
 						</Btn>
 					</div>
 				</ModalFooter>
