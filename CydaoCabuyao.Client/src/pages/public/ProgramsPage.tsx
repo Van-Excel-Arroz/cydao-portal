@@ -1,86 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar } from 'lucide-react';
-import { ProgramCategory, PROGRAM_CATEGORY_LABELS } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { PROGRAM_CATEGORY_LABELS } from '@/types';
+import type { CydaoProgram } from '@/types';
 import { CategoryBadge, OpenBadge, Badge } from '@/components/shared/Badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
-
-const mockPrograms = [
-	{
-		id: 1,
-		title: 'Leadership Development Program',
-		description:
-			'A structured program designed to cultivate leadership skills, civic responsibility, and community awareness among Cabuyao youth aged 15–30.',
-		category: ProgramCategory.Leadership,
-		applicationDeadline: '2026-04-30',
-		isOpen: true,
-	},
-	{
-		id: 2,
-		title: 'Environmental Youth Camp',
-		description:
-			"A multi-day immersive camp focused on environmental stewardship, sustainability practices, and ecological awareness across Cabuyao's watersheds.",
-		category: ProgramCategory.Environment,
-		applicationDeadline: '2026-05-15',
-		isOpen: true,
-	},
-	{
-		id: 3,
-		title: 'Youth Sports League 2026',
-		description:
-			'Citywide inter-barangay sports competition covering basketball, volleyball, and athletics. Open to youth aged 15–25 from all 18 barangays.',
-		category: ProgramCategory.Sports,
-		applicationDeadline: '2026-04-10',
-		isOpen: false,
-	},
-	{
-		id: 4,
-		title: 'Arts & Culture Workshop Series',
-		description:
-			"A series of workshops covering visual arts, traditional dance, music production, and digital media — celebrating Cabuyao's cultural heritage.",
-		category: ProgramCategory.ArtsAndCulture,
-		applicationDeadline: '2026-05-20',
-		isOpen: true,
-	},
-	{
-		id: 5,
-		title: 'Livelihood Skills Training (TESDA)',
-		description:
-			'Free TESDA-accredited skills training for youth aged 18–30, covering welding, bread & pastry production, and computer hardware servicing.',
-		category: ProgramCategory.Livelihood,
-		applicationDeadline: '2026-04-25',
-		isOpen: true,
-	},
-	{
-		id: 6,
-		title: 'Mental Wellness Support Program',
-		description:
-			'A peer-support and counseling program addressing youth mental health, stress management, and emotional resilience — facilitated by licensed professionals.',
-		category: ProgramCategory.MentalHealth,
-		applicationDeadline: '2026-06-01',
-		isOpen: true,
-	},
-	{
-		id: 7,
-		title: 'Academic Scholarship Grant',
-		description:
-			'Financial assistance for qualified youth enrolled in tertiary education, prioritizing students from low-income households across all 18 barangays.',
-		category: ProgramCategory.Scholarship,
-		applicationDeadline: '2026-03-31',
-		isOpen: false,
-	},
-	{
-		id: 8,
-		title: 'Community Organizing Seminar',
-		description:
-			'Hands-on training on barangay-level youth organizing, advocacy writing, and participatory governance for aspiring youth leaders.',
-		category: ProgramCategory.Leadership,
-		applicationDeadline: '2026-05-10',
-		isOpen: true,
-	},
-];
+import api from '@/lib/api';
 
 const categoryOptions = [
 	{ label: 'All', value: 'all' },
@@ -106,8 +34,13 @@ export default function ProgramsPage() {
 	const [category, setCategory] = useState('all');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
 
+	const { data: programs = [], isLoading } = useQuery({
+		queryKey: ['programs'],
+		queryFn: () => api.get<CydaoProgram[]>('/programs').then(r => r.data),
+	});
+
 	const filtered = useMemo(() => {
-		let list = [...mockPrograms];
+		let list = [...programs];
 		if (search.trim()) {
 			const q = search.toLowerCase();
 			list = list.filter(p => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
@@ -119,9 +52,9 @@ export default function ProgramsPage() {
 			list = list.filter(p => (status === 'open' ? p.isOpen : !p.isOpen));
 		}
 		return list;
-	}, [search, category, status]);
+	}, [programs, search, category, status]);
 
-	const featured = mockPrograms.find(p => p.isOpen);
+	const featured = programs.find(p => p.isOpen);
 
 	return (
 		<>
@@ -152,7 +85,9 @@ export default function ProgramsPage() {
 						className="border border-[#e0e0e0] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] text-[#555] font-['Instrument_Sans'] focus:outline-none focus:border-[#0d0d0d] bg-white cursor-pointer"
 					>
 						{categoryOptions.map(opt => (
-							<option key={opt.value} value={opt.value}>{opt.label}</option>
+							<option key={opt.value} value={opt.value}>
+								{opt.label}
+							</option>
 						))}
 					</select>
 
@@ -169,7 +104,7 @@ export default function ProgramsPage() {
 
 			<div className="max-w-7xl mx-auto px-6 py-16">
 				{/* Featured program — full-width banner */}
-				{featured && category === 'all' && status !== 'closed' && !search && (
+				{!isLoading && featured && category === 'all' && status !== 'closed' && !search && (
 					<div className="grid grid-cols-1 lg:grid-cols-2 border border-[#e0e0e0] mb-14">
 						<div className="overflow-hidden">
 							<img
@@ -213,12 +148,14 @@ export default function ProgramsPage() {
 				{/* Results count */}
 				<div className="flex items-center justify-between mb-8">
 					<p className="text-xs uppercase tracking-[2px] text-[#aaa] font-['Instrument_Sans']">
-						{filtered.length} program{filtered.length !== 1 ? 's' : ''} found
+						{isLoading ? 'Loading...' : `${filtered.length} program${filtered.length !== 1 ? 's' : ''} found`}
 					</p>
 				</div>
 
 				{/* Program grid */}
-				{filtered.length === 0 ? (
+				{isLoading ? (
+					<EmptyState variant="page" title="Loading programs..." subtitle="Please wait." />
+				) : filtered.length === 0 ? (
 					<EmptyState variant="page" title="No programs found" subtitle="Try adjusting your filters or search term." />
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

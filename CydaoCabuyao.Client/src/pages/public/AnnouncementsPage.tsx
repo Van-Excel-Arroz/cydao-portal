@@ -1,75 +1,12 @@
 import { useState, useMemo } from 'react';
-import { AnnouncementCategory, ANNOUNCEMENT_CATEGORY_LABELS } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { ANNOUNCEMENT_CATEGORY_LABELS } from '@/types';
+import type { Announcement } from '@/types';
 import { AnnouncementBadge } from '@/components/shared/Badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { FieldSelect } from '@/components/shared/FormField';
-
-const mockAnnouncements = [
-	{
-		id: 1,
-		title: 'Application Period Now Open for Leadership Program',
-		body: 'Youth members aged 15–30 from all barangays are encouraged to apply for the Q2 Leadership Development Program. The program runs for 12 weeks and covers civic leadership, public speaking, and community organizing. Deadline is April 30, 2026.',
-		category: AnnouncementCategory.New,
-		createdAt: '2026-03-10',
-	},
-	{
-		id: 2,
-		title: 'YORP Registration for 2026 Now Accepting Applications',
-		body: 'Youth organizations seeking accreditation under the Youth Organizations Registration Program may now submit their documentary requirements at the CYDAO office. Accreditation grants access to funding, technical assistance, and official recognition.',
-		category: AnnouncementCategory.YORP,
-		createdAt: '2026-03-08',
-	},
-	{
-		id: 3,
-		title: 'Kabataan Summit Registration Closes April 1',
-		body: 'Only 20 slots remaining for the Kabataan Leadership Summit. Register via the portal before April 1 to secure your slot. The summit will be held at the Cabuyao City Hall Auditorium from April 10–12.',
-		category: AnnouncementCategory.Event,
-		createdAt: '2026-03-05',
-	},
-	{
-		id: 4,
-		title: 'Portal Now Live — Register Your Account',
-		body: 'The CYDAO Cabuyao online portal is now fully operational. Youth members may create accounts, apply for programs, and register for events. Staff may access the admin panel to manage submissions and content.',
-		category: AnnouncementCategory.Update,
-		createdAt: '2026-03-01',
-	},
-	{
-		id: 5,
-		title: 'Livelihood Training Grant Available for Q2 2026',
-		body: 'CYDAO is partnering with TESDA to offer free skills training for youth aged 18–30. Limited slots per barangay are available for welding, bread & pastry production, and computer hardware servicing.',
-		category: AnnouncementCategory.New,
-		createdAt: '2026-02-25',
-	},
-	{
-		id: 6,
-		title: 'Environmental Youth Camp: Call for Participants',
-		body: "The Environmental Youth Camp is open for registration. Join 3 days of immersive activities on sustainability, watershed management, and ecological advocacy at Cabuyao's forests. Limited to 60 participants.",
-		category: AnnouncementCategory.Event,
-		createdAt: '2026-02-20',
-	},
-	{
-		id: 7,
-		title: 'YORP Accredited Orgs for 2025 — Official List Released',
-		body: 'The official list of YORP-accredited youth organizations for 2025 has been released. Organizations not on the list are encouraged to apply for the 2026 accreditation cycle which opens in March.',
-		category: AnnouncementCategory.YORP,
-		createdAt: '2026-02-15',
-	},
-	{
-		id: 8,
-		title: 'Academic Scholarship Grant Deadline Extended',
-		body: "The deadline for the CYDAO Academic Scholarship Grant has been extended to March 31, 2026. Applicants must be enrolled in a tertiary institution and residing in any of Cabuyao's 18 barangays.",
-		category: AnnouncementCategory.Update,
-		createdAt: '2026-02-10',
-	},
-	{
-		id: 9,
-		title: 'Mental Wellness Forum Recap — Key Takeaways',
-		body: 'The Youth Mental Health Forum held last February drew 55 participants and featured three licensed psychologists. A summary of key takeaways and available mental health resources has been posted on our Facebook page.',
-		category: AnnouncementCategory.Update,
-		createdAt: '2026-02-05',
-	},
-];
+import api from '@/lib/api';
 
 const ALL = 'all';
 
@@ -90,8 +27,13 @@ export default function AnnouncementsPage() {
 	const [search, setSearch] = useState('');
 	const [category, setCategory] = useState(ALL);
 
+	const { data: announcements = [], isLoading } = useQuery({
+		queryKey: ['announcements'],
+		queryFn: () => api.get<Announcement[]>('/announcements').then(r => r.data),
+	});
+
 	const filtered = useMemo(() => {
-		let list = [...mockAnnouncements];
+		let list = [...announcements];
 		if (search.trim()) {
 			const q = search.toLowerCase();
 			list = list.filter(a => a.title.toLowerCase().includes(q) || a.body.toLowerCase().includes(q));
@@ -100,10 +42,10 @@ export default function AnnouncementsPage() {
 			list = list.filter(a => a.category === Number(category));
 		}
 		return list;
-	}, [search, category]);
+	}, [announcements, search, category]);
 
 	const isFiltered = search.trim() !== '' || category !== ALL;
-	const [featured, ...rest] = isFiltered ? [] : mockAnnouncements;
+	const [featured, ...rest] = isFiltered ? [] : announcements;
 	const restList = isFiltered ? filtered : rest;
 
 	return (
@@ -139,7 +81,9 @@ export default function AnnouncementsPage() {
 						className="w-44! py-2 text-[11px] font-bold uppercase tracking-[1px]"
 					>
 						{categoryOptions.map(opt => (
-							<option key={opt.value} value={opt.value}>{opt.label}</option>
+							<option key={opt.value} value={opt.value}>
+								{opt.label}
+							</option>
 						))}
 					</FieldSelect>
 					<div className="flex-1" />
@@ -153,7 +97,9 @@ export default function AnnouncementsPage() {
 			</section>
 
 			<div className="max-w-7xl mx-auto px-6 py-16 space-y-16">
-				{filtered.length === 0 ? (
+				{isLoading ? (
+					<EmptyState variant="page" title="Loading announcements..." subtitle="Please wait." />
+				) : filtered.length === 0 ? (
 					<EmptyState variant="page" title="No announcements found" subtitle="Try a different search or category." />
 				) : (
 					<>
@@ -171,7 +117,9 @@ export default function AnnouncementsPage() {
 									<div>
 										<div className="flex items-center gap-2 mb-5">
 											<AnnouncementBadge category={featured.category} />
-											<span className="text-xs text-[#aaa] font-['Instrument_Sans']">{formatDate(featured.createdAt)}</span>
+											<span className="text-xs text-[#aaa] font-['Instrument_Sans']">
+												{formatDate(featured.createdAt)}
+											</span>
 										</div>
 										<h2 className="font-['Syne'] font-bold text-2xl lg:text-3xl text-[#0d0d0d] leading-snug mb-4">
 											{featured.title}

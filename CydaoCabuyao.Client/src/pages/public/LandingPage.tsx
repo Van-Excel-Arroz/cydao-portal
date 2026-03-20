@@ -1,80 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Calendar, Users } from 'lucide-react';
-import { PROGRAM_CATEGORY_LABELS, ProgramCategory, AnnouncementCategory } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { PROGRAM_CATEGORY_LABELS, ProgramCategory } from '@/types';
+import type { CydaoEvent, Announcement } from '@/types';
 import { OpenBadge, AnnouncementBadge } from '@/components/shared/Badge';
-
-// --- Mock data (replace with API calls once backend controllers exist) ---
-
-const mockEvents = [
-	{
-		id: 1,
-		title: 'Kabataan Leadership Summit 2026',
-		startDate: '2026-04-10',
-		endDate: '2026-04-12',
-		venue: 'Cabuyao City Hall Auditorium',
-		availableSlots: 80,
-		isOpen: true,
-	},
-	{
-		id: 2,
-		title: 'Environmental Awareness Day',
-		startDate: '2026-04-22',
-		endDate: '2026-04-22',
-		venue: 'Bigaa Community Park',
-		availableSlots: 150,
-		isOpen: true,
-	},
-	{
-		id: 3,
-		title: 'Youth Mental Health Forum',
-		startDate: '2026-05-03',
-		endDate: '2026-05-03',
-		venue: 'Cabuyao Public Library',
-		availableSlots: 60,
-		isOpen: false,
-	},
-	{
-		id: 4,
-		title: 'Livelihood Skills Training Fair',
-		startDate: '2026-05-17',
-		endDate: '2026-05-18',
-		venue: 'Cabuyao Sports Complex',
-		availableSlots: 200,
-		isOpen: true,
-	},
-];
-
-const mockAnnouncements = [
-	{
-		id: 1,
-		title: 'Application Period Now Open for Leadership Program',
-		body: 'Youth members aged 15–30 from all barangays are encouraged to apply for the Q2 Leadership Development Program. Deadline is April 30, 2026.',
-		category: AnnouncementCategory.New,
-		createdAt: '2026-03-10',
-	},
-	{
-		id: 2,
-		title: 'YORP Registration for 2026 Now Accepting Applications',
-		body: 'Youth organizations seeking accreditation under the YORP program may now submit their documentary requirements at the CYDAO office.',
-		category: AnnouncementCategory.YORP,
-		createdAt: '2026-03-08',
-	},
-	{
-		id: 3,
-		title: 'Kabataan Summit Registration Closes April 1',
-		body: 'Only 20 slots remaining for the Kabataan Leadership Summit. Register via the portal before April 1 to secure your slot.',
-		category: AnnouncementCategory.Event,
-		createdAt: '2026-03-05',
-	},
-	{
-		id: 4,
-		title: 'Portal Now Live — Register Your Account',
-		body: 'The CYDAO Cabuyao online portal is now fully operational. Youth members may create accounts, apply for programs, and register for events.',
-		category: AnnouncementCategory.Update,
-		createdAt: '2026-03-01',
-	},
-];
-
+import api from '@/lib/api';
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -265,7 +195,7 @@ function KabataanSection() {
 						</Link>
 					</div>
 
-					{/* Right: image — same height as the left content */}
+					{/* Right: image */}
 					<div className="relative overflow-hidden">
 						<img
 							src="https://picsum.photos/seed/cydao-caravan/800/600"
@@ -286,6 +216,13 @@ function KabataanSection() {
 }
 
 function EventsSection() {
+	const { data: events = [] } = useQuery({
+		queryKey: ['events'],
+		queryFn: () => api.get<CydaoEvent[]>('/events').then(r => r.data),
+	});
+
+	const preview = events.slice(0, 4);
+
 	return (
 		<section className="py-24 border-b border-[#e0e0e0]">
 			<div className="max-w-7xl mx-auto px-6">
@@ -304,7 +241,7 @@ function EventsSection() {
 
 				{/* Zigzag layout — even cards shift down */}
 				<div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-					{mockEvents.map((event, idx) => (
+					{preview.map((event, idx) => (
 						<div
 							key={event.id}
 							className={`flex flex-col h-105 border border-[#e0e0e0] bg-white group hover:border-[#d42b2b] transition-colors ${
@@ -322,7 +259,6 @@ function EventsSection() {
 
 							{/* Content */}
 							<div className="p-5 flex flex-col flex-1">
-								{/* Status badge */}
 								<div className="mb-3">
 									<OpenBadge isOpen={event.isOpen} />
 								</div>
@@ -362,7 +298,14 @@ function EventsSection() {
 }
 
 function AnnouncementsSection() {
-	const [featured, ...rest] = mockAnnouncements;
+	const { data: announcements = [] } = useQuery({
+		queryKey: ['announcements'],
+		queryFn: () => api.get<Announcement[]>('/announcements').then(r => r.data),
+	});
+
+	const [featured, ...rest] = announcements.slice(0, 4);
+
+	if (!featured) return null;
 
 	return (
 		<section className="py-24 bg-[#f5f5f5]">
@@ -406,27 +349,31 @@ function AnnouncementsSection() {
 				</div>
 
 				{/* Remaining — 3-column newspaper grid with images */}
-				<div className="columns-1 md:columns-2 lg:columns-3 gap-6">
-					{rest.map(ann => (
-						<div key={ann.id} className="break-inside-avoid mb-6 bg-white border border-[#e0e0e0]">
-							<div className="overflow-hidden">
-								<img
-									src={`https://picsum.photos/seed/ann${ann.id}/600/280`}
-									alt={ann.title}
-									className="w-full h-36 object-cover"
-								/>
-							</div>
-							<div className="p-5">
-								<div className="flex items-center gap-2 mb-2">
-									<AnnouncementBadge category={ann.category} />
-									<span className="text-[10px] text-[#aaa] font-['Instrument_Sans']">{formatDate(ann.createdAt)}</span>
+				{rest.length > 0 && (
+					<div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+						{rest.map(ann => (
+							<div key={ann.id} className="break-inside-avoid mb-6 bg-white border border-[#e0e0e0]">
+								<div className="overflow-hidden">
+									<img
+										src={`https://picsum.photos/seed/ann${ann.id}/600/280`}
+										alt={ann.title}
+										className="w-full h-36 object-cover"
+									/>
 								</div>
-								<h3 className="font-['Syne'] font-bold text-sm text-[#0d0d0d] mb-2 leading-snug">{ann.title}</h3>
-								<p className="text-xs text-[#555] font-['Instrument_Sans'] leading-relaxed">{ann.body}</p>
+								<div className="p-5">
+									<div className="flex items-center gap-2 mb-2">
+										<AnnouncementBadge category={ann.category} />
+										<span className="text-[10px] text-[#aaa] font-['Instrument_Sans']">
+											{formatDate(ann.createdAt)}
+										</span>
+									</div>
+									<h3 className="font-['Syne'] font-bold text-sm text-[#0d0d0d] mb-2 leading-snug">{ann.title}</h3>
+									<p className="text-xs text-[#555] font-['Instrument_Sans'] leading-relaxed">{ann.body}</p>
+								</div>
 							</div>
-						</div>
-					))}
-				</div>
+						))}
+					</div>
+				)}
 			</div>
 		</section>
 	);

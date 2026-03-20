@@ -1,97 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Users, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import type { CydaoEvent } from '@/types';
 import { OpenBadge, Badge } from '@/components/shared/Badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { SegmentedControl } from '@/components/shared/SegmentedControl';
-
-const mockEvents = [
-	{
-		id: 1,
-		title: 'Kabataan Leadership Summit 2026',
-		description:
-			'A two-day summit gathering youth leaders from all 18 barangays to discuss governance, advocacy, and community action plans.',
-		startDate: '2026-04-10',
-		endDate: '2026-04-12',
-		venue: 'Cabuyao City Hall Auditorium',
-		availableSlots: 80,
-		isOpen: true,
-		month: 'April 2026',
-	},
-	{
-		id: 2,
-		title: 'Environmental Awareness Day',
-		description:
-			'A barangay-wide cleanup drive and environmental education event held at Bigaa Community Park, in partnership with the DENR.',
-		startDate: '2026-04-22',
-		endDate: '2026-04-22',
-		venue: 'Bigaa Community Park',
-		availableSlots: 150,
-		isOpen: true,
-		month: 'April 2026',
-	},
-	{
-		id: 3,
-		title: 'YORP Orientation Seminar',
-		description:
-			'Mandatory orientation for all youth organizations seeking YORP accreditation in 2026. Bring your documentary requirements.',
-		startDate: '2026-04-28',
-		endDate: '2026-04-28',
-		venue: 'CYDAO Conference Room',
-		availableSlots: 40,
-		isOpen: true,
-		month: 'April 2026',
-	},
-	{
-		id: 4,
-		title: 'Youth Mental Health Forum',
-		description:
-			'A half-day forum featuring licensed psychologists discussing mental wellness, stress management, and seeking help resources for Cabuyao youth.',
-		startDate: '2026-05-03',
-		endDate: '2026-05-03',
-		venue: 'Cabuyao Public Library',
-		availableSlots: 60,
-		isOpen: false,
-		month: 'May 2026',
-	},
-	{
-		id: 5,
-		title: 'Livelihood Skills Training Fair',
-		description:
-			'A two-day fair featuring TESDA-accredited training booths, livelihood exhibits, and on-the-spot enrollment for free skills programs.',
-		startDate: '2026-05-17',
-		endDate: '2026-05-18',
-		venue: 'Cabuyao Sports Complex',
-		availableSlots: 200,
-		isOpen: true,
-		month: 'May 2026',
-	},
-	{
-		id: 6,
-		title: 'Kabataang Artista: Arts Festival',
-		description:
-			'An inter-barangay arts showcase featuring visual art, spoken word, dance, and live music performances celebrating Cabuyao youth talent.',
-		startDate: '2026-05-24',
-		endDate: '2026-05-25',
-		venue: 'Cabuyao Town Plaza',
-		availableSlots: 500,
-		isOpen: true,
-		month: 'May 2026',
-	},
-	{
-		id: 7,
-		title: 'Youth Governance Workshop',
-		description:
-			'A one-day workshop on participatory governance, budget advocacy, and Sangguniang Kabataan processes for elected SK officials.',
-		startDate: '2026-06-12',
-		endDate: '2026-06-12',
-		venue: 'Cabuyao City Hall Session Hall',
-		availableSlots: 50,
-		isOpen: true,
-		month: 'June 2026',
-	},
-];
+import api from '@/lib/api';
 
 function formatDate(dateStr: string) {
 	return new Date(dateStr).toLocaleDateString('en-PH', {
@@ -108,6 +24,10 @@ function formatEventDate(start: string, end: string) {
 	return `${s.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
+function getMonthLabel(dateStr: string) {
+	return new Date(dateStr).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+}
+
 const STATUS_OPTIONS = [
 	{ label: 'All', value: 'all' },
 	{ label: 'Open', value: 'open' },
@@ -118,8 +38,13 @@ export default function EventsPage() {
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<'all' | 'open' | 'closed'>('all');
 
+	const { data: events = [], isLoading } = useQuery({
+		queryKey: ['events'],
+		queryFn: () => api.get<CydaoEvent[]>('/events').then(r => r.data),
+	});
+
 	const filtered = useMemo(() => {
-		let list = [...mockEvents];
+		let list = [...events];
 		if (search.trim()) {
 			const q = search.toLowerCase();
 			list = list.filter(
@@ -133,18 +58,19 @@ export default function EventsPage() {
 			list = list.filter(e => (status === 'open' ? e.isOpen : !e.isOpen));
 		}
 		return list;
-	}, [search, status]);
+	}, [events, search, status]);
 
 	const grouped = useMemo(() => {
-		const map = new Map<string, typeof filtered>();
+		const map = new Map<string, CydaoEvent[]>();
 		for (const ev of filtered) {
-			if (!map.has(ev.month)) map.set(ev.month, []);
-			map.get(ev.month)!.push(ev);
+			const month = getMonthLabel(ev.startDate);
+			if (!map.has(month)) map.set(month, []);
+			map.get(month)!.push(ev);
 		}
 		return map;
 	}, [filtered]);
 
-	const featured = mockEvents[0];
+	const featured = events[0] ?? null;
 
 	return (
 		<>
@@ -152,34 +78,38 @@ export default function EventsPage() {
 			<section className="relative overflow-hidden bg-[#0d0d0d] h-[50vh] min-h-90">
 				<img
 					src="https://picsum.photos/seed/event-featured/1400/700"
-					alt={featured.title}
+					alt={featured?.title ?? ''}
 					className="absolute inset-0 w-full h-full object-cover opacity-30"
 				/>
 				<div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-12">
-					<Badge className="bg-[#d42b2b] text-white border-[#d42b2b] w-fit mb-3">Next Up</Badge>
-					<h2 className="font-['Syne'] font-extrabold text-4xl text-white leading-tight mb-3 max-w-xl">
-						{featured.title}
-					</h2>
-					<div className="flex flex-wrap gap-5 text-sm text-white/60 font-['Instrument_Sans'] mb-5">
-						<span className="flex items-center gap-1.5">
-							<Calendar size={13} />
-							{formatEventDate(featured.startDate, featured.endDate)}
-						</span>
-						<span className="flex items-center gap-1.5">
-							<MapPin size={13} />
-							{featured.venue}
-						</span>
-						<span className="flex items-center gap-1.5">
-							<Users size={13} />
-							{featured.availableSlots} slots
-						</span>
-					</div>
-					<Link
-						to="/register"
-						className="inline-flex items-center gap-2 bg-[#d42b2b] text-white px-6 py-3 text-sm font-semibold font-['Instrument_Sans'] hover:bg-[#b82424] transition-colors w-fit"
-					>
-						Register Now <ArrowRight size={14} />
-					</Link>
+					{featured && (
+						<>
+							<Badge className="bg-[#d42b2b] text-white border-[#d42b2b] w-fit mb-3">Next Up</Badge>
+							<h2 className="font-['Syne'] font-extrabold text-4xl text-white leading-tight mb-3 max-w-xl">
+								{featured.title}
+							</h2>
+							<div className="flex flex-wrap gap-5 text-sm text-white/60 font-['Instrument_Sans'] mb-5">
+								<span className="flex items-center gap-1.5">
+									<Calendar size={13} />
+									{formatEventDate(featured.startDate, featured.endDate)}
+								</span>
+								<span className="flex items-center gap-1.5">
+									<MapPin size={13} />
+									{featured.venue}
+								</span>
+								<span className="flex items-center gap-1.5">
+									<Users size={13} />
+									{featured.availableSlots} slots
+								</span>
+							</div>
+							<Link
+								to="/register"
+								className="inline-flex items-center gap-2 bg-[#d42b2b] text-white px-6 py-3 text-sm font-semibold font-['Instrument_Sans'] hover:bg-[#b82424] transition-colors w-fit"
+							>
+								Register Now <ArrowRight size={14} />
+							</Link>
+						</>
+					)}
 				</div>
 			</section>
 
@@ -201,23 +131,25 @@ export default function EventsPage() {
 
 			{/* Events grouped by month */}
 			<div className="max-w-7xl mx-auto px-6 py-16">
-				{filtered.length === 0 ? (
+				{isLoading ? (
+					<EmptyState variant="page" title="Loading events..." subtitle="Please wait." />
+				) : filtered.length === 0 ? (
 					<EmptyState variant="page" title="No events found" subtitle="Try a different search or filter." />
 				) : (
 					<div className="space-y-16">
-						{Array.from(grouped.entries()).map(([month, events]) => (
+						{Array.from(grouped.entries()).map(([month, monthEvents]) => (
 							<div key={month}>
 								{/* Month header */}
 								<div className="flex items-center gap-6 mb-8">
 									<h2 className="font-['Syne'] font-extrabold text-4xl text-[#e0e0e0] shrink-0">{month}</h2>
 									<div className="h-px flex-1 bg-[#e0e0e0]" />
 									<span className="text-xs text-[#aaa] font-['Instrument_Sans'] shrink-0">
-										{events.length} event{events.length !== 1 ? 's' : ''}
+										{monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}
 									</span>
 								</div>
 
 								<div className="space-y-4">
-									{events.map(event => (
+									{monthEvents.map(event => (
 										<div
 											key={event.id}
 											className="grid grid-cols-1 lg:grid-cols-[200px_1fr_auto] bg-white border border-[#e0e0e0] group hover:border-[#d42b2b] transition-colors"
