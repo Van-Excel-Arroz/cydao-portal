@@ -10,7 +10,12 @@ app.zip
 
 # Environment
 .env
+.env.*
 appsettings.Development.json
+
+# Logs
+logs/
+logs.zip
 
 # Claude
 .claude/
