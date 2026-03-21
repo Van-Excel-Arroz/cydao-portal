@@ -5,6 +5,8 @@ dist/
 # .NET
 bin/
 obj/
+publish/
+app.zip
 
 # Environment
 .env
