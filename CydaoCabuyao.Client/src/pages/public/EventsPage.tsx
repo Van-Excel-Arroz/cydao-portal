@@ -1,3 +1,4 @@
+import eventImg from '@/assets/images/event.jpg';
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Users, ArrowRight, SlidersHorizontal } from 'lucide-react';
@@ -77,7 +78,7 @@ export default function EventsPage() {
 			{/* Featured event — full-bleed banner */}
 			<section className="relative overflow-hidden bg-[#0d0d0d] h-[50vh] min-h-90">
 				<img
-					src="https://picsum.photos/seed/event-featured/1400/700"
+					src={eventImg}
 					alt={featured?.title ?? ''}
 					className="absolute inset-0 w-full h-full object-cover opacity-30"
 				/>

@@ -1,3 +1,10 @@
+import youthImg1 from '@/assets/images/youth-1.jpg';
+import youthImg2 from '@/assets/images/youth-2.jpg';
+import youthImg3 from '@/assets/images/youth-3.jpg';
+import youthImg4 from '@/assets/images/youth-4.jpg';
+
+const youthImages = [youthImg1, youthImg2, youthImg3, youthImg4];
+
 const coreValues = [
 	{
 		key: 'INTEGRITY',
@@ -124,10 +131,10 @@ export default function AboutPage() {
 
 			{/* Image strip */}
 			<section className="grid grid-cols-2 lg:grid-cols-4 h-52">
-				{[1, 2, 3, 4].map(n => (
-					<div key={n} className="overflow-hidden">
+				{youthImages.map((src, i) => (
+					<div key={i} className="overflow-hidden">
 						<img
-							src={`https://picsum.photos/seed/about${n}/400/210`}
+							src={src}
 							alt=""
 							className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
 						/>

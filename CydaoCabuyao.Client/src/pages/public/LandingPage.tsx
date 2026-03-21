@@ -1,3 +1,5 @@
+import heroBanner from '@/assets/images/hero-banner.jpg';
+import kabataanCaravan from '@/assets/images/kabataan-caravan.jpg';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Calendar, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -42,7 +44,7 @@ function HeroSection() {
 				style={{ clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0% 100%)' }}
 			>
 				<img
-					src="https://picsum.photos/seed/cydao-hero/900/1200"
+					src={heroBanner}
 					alt="Cabuyao youth"
 					className="w-full h-full object-cover mix-blend-multiply opacity-50"
 				/>
@@ -198,7 +200,7 @@ function KabataanSection() {
 					{/* Right: image */}
 					<div className="relative overflow-hidden">
 						<img
-							src="https://picsum.photos/seed/cydao-caravan/800/600"
+							src={kabataanCaravan}
 							alt="Kabataan Caravan"
 							className="w-full h-full object-cover"
 						/>

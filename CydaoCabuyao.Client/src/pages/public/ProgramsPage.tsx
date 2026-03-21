@@ -1,3 +1,4 @@
+import programImg from '@/assets/images/program-1.jpg';
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar } from 'lucide-react';
@@ -61,10 +62,10 @@ export default function ProgramsPage() {
 			{/* Page header */}
 			<section className="relative overflow-hidden bg-[#0d0d0d] h-[40vh] min-h-72">
 				<img
-					src="https://picsum.photos/seed/programs-header/1600/600"
+					src={programImg}
 					alt=""
 					aria-hidden="true"
-					className="absolute inset-0 w-full h-full object-cover opacity-30"
+					className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
 				/>
 				<div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-10">
 					<p className="text-[11px] font-bold tracking-[3px] uppercase text-white/40 font-['Instrument_Sans'] mb-3">
