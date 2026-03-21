@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { LogOut, User } from 'lucide-react';
-import logo from '@/assets/images/logo.svg';
+import logo from '@/assets/images/logo.png';
 
 export function Navbar() {
 	const { token, fullName, isStaff, clearAuth } = useAuthStore();

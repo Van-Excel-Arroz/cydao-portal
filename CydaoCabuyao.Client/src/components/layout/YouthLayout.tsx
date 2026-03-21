@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { FileText, CalendarCheck, User, Menu, LogOut, ChevronRight, BookOpen, CalendarDays } from 'lucide-react';
-import logo from '@/assets/images/logo.svg';
+import logo from '@/assets/images/logo.png';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [

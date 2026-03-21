@@ -9,7 +9,7 @@ import {
 	LogOut,
 	ChevronRight,
 } from 'lucide-react';
-import logo from '@/assets/images/logo.svg';
+import logo from '@/assets/images/logo.png';
 import { useAuthStore } from '@/stores/authStore';
 
 const navItems = [
